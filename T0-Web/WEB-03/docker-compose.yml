@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # Public-facing web app (port 80)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8003:80"
+    depends_on:
+      - internal-api
+    networks:
+      - ctf-net
+
+  # Internal API (only accessible via SSRF, not port-mapped)
+  internal-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.internal
+    networks:
+      ctf-net:
+        aliases:
+          - internal-api
+
+networks:
+  ctf-net:
+    driver: bridge

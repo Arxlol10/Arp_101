@@ -1,0 +1,6 @@
+FROM php:7.4-cli
+
+COPY challenge/internal_api.php /var/www/html/index.php
+
+EXPOSE 8080
+CMD ["php", "-S", "0.0.0.0:8080", "-t", "/var/www/html"]

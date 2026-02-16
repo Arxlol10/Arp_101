@@ -1,0 +1,249 @@
+﻿TIER 0 CRYPTOGRAPHY
+IMPLEMENTATION & STRUCTURE PLAN
+Complete Technical Implementation with Encryption Chains and Decryption Scripts
+CRYPTOGRAPHY CHALLENGES OVERVIEW
+Challenge
+	Type
+	Points
+	Difficulty
+	Status
+	CRYPTO-01: Multi-Layer
+	3-Layer Decrypt
+	300
+	Medium
+	REAL
+	CRYPTO-02: Caesar
+	ROT13
+	-100
+	Easy
+	HONEYPOT
+	CRYPTO-03: Hash Crack
+	MD5 → AES
+	-100
+	Easy
+	HONEYPOT
+	FILE STRUCTURE
+/var/www/html/files/crypto/
+├── crypto-01/                    # REAL challenge
+│   ├── README.txt                # Challenge description
+│   ├── encrypted_fragment.bin    # Main encrypted file
+│   └── hint.txt                  # Decryption order hint
+│
+├── crypto-02/                    # HONEYPOT
+│   ├── README.txt
+│   └── caesar_encrypted.txt      # ROT13 encrypted fake flag
+│
+└── crypto-03/                    # HONEYPOT
+    ├── README.txt
+    ├── hash.txt                  # MD5 hash to crack
+    └── encrypted.bin             # AES encrypted fake flag
+CRYPTO-01: MULTI-LAYER ENCRYPTION [REAL]
+Challenge Overview
+Concept: Flag is encrypted with three layers: AES-256-CBC → Base85 encoding → ROT47 substitution cipher. Players must reverse the process in correct order.
+Flag: FLAG{crypto_01_multi_layer_decrypt_n9k4}
+Encryption Chain Diagram
+Original Flag: FLAG{crypto_01_multi_layer_decrypt_n9k4}
+     ↓
+Layer 1: AES-256-CBC Encryption
+  Password: ctf_crypto_2024
+  IV: Random 16 bytes
+  Output: Binary ciphertext
+     ↓
+Layer 2: Base85 Encoding (ASCII85)
+  Converts binary → ASCII printable
+  Output: ASCII string
+     ↓
+Layer 3: ROT47 Substitution Cipher
+  Rotates ASCII 33-126 by 47 positions
+  Output: Obfuscated ASCII
+     ↓
+Final Output: encrypted_fragment.bin
+File Generation Scripts
+1. Encryption Script (create_crypto01.py)
+#!/usr/bin/env python3
+"""
+CRYPTO-01 Challenge File Generator
+Creates encrypted_fragment.bin with 3-layer encryption
+"""
+
+
+import base64
+from Crypto.Cipher import AES
+from Crypto.Protocol.KDF import PBKDF2
+from Crypto.Random import get_random_bytes
+import os
+
+
+# Original flag
+FLAG = b'FLAG{crypto_01_multi_layer_decrypt_n9k4}'
+PASSWORD = b'ctf_crypto_2024'
+
+
+def rot47(text):
+    """ROT47 substitution cipher (ASCII 33-126)"""
+    result = []
+    for char in text:
+        if 33 <= char <= 126:
+            rotated = ((char - 33 + 47) % 94) + 33
+            result.append(rotated)
+        else:
+            result.append(char)
+    return bytes(result)
+
+
+def base85_encode(data):
+    """Base85 encoding (ASCII85)"""
+    return base64.a85encode(data)
+
+
+def aes_encrypt(plaintext, password):
+    """AES-256-CBC encryption with PBKDF2 key derivation"""
+    # Generate random salt and IV
+    salt = get_random_bytes(16)
+    iv = get_random_bytes(16)
+    
+    # Derive 256-bit key from password
+    key = PBKDF2(password, salt, dkLen=32, count=100000)
+    
+    # Add PKCS7 padding
+    padding_length = 16 - (len(plaintext) % 16)
+    padded = plaintext + bytes([padding_length] * padding_length)
+    
+    # Encrypt
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    ciphertext = cipher.encrypt(padded)
+    
+    # Return salt + IV + ciphertext
+    return salt + iv + ciphertext
+
+
+def create_encrypted_file():
+    print('[*] Creating CRYPTO-01 challenge files...')
+    
+    # Layer 1: AES-256-CBC encryption
+    print('[+] Layer 1: AES-256-CBC encryption')
+    encrypted = aes_encrypt(FLAG, PASSWORD)
+    print(f'    Encrypted size: {len(encrypted)} bytes')
+    
+    # Layer 2: Base85 encoding
+    print('[+] Layer 2: Base85 encoding')
+    encoded = base85_encode(encrypted)
+    print(f'    Encoded size: {len(encoded)} bytes')
+    
+    # Layer 3: ROT47
+    print('[+] Layer 3: ROT47 substitution')
+    final = rot47(encoded)
+    print(f'    Final size: {len(final)} bytes')
+    
+    # Create directory structure
+    os.makedirs('/var/www/html/files/crypto/crypto-01', exist_ok=True)
+    
+    # Save encrypted file
+    with open('/var/www/html/files/crypto/crypto-01/encrypted_fragment.bin', 'wb') as f:
+        f.write(final)
+    
+    # Create hint file
+    hint = '''Decryption Order:
+1. ROT47 (ASCII 33-126, shift 47)
+2. Base85 decode
+3. AES-256-CBC decrypt
+   Password: ctf_crypto_2024
+'''
+    with open('/var/www/html/files/crypto/crypto-01/hint.txt', 'w') as f:
+        f.write(hint)
+    
+    # Create README
+    readme = '''CRYPTO-01: Multi-Layer Encryption
+Points: 300
+
+
+The flag has been encrypted with three layers of encryption.
+Decrypt the file encrypted_fragment.bin to retrieve the flag.
+
+
+Check hint.txt for decryption order.
+'''
+    with open('/var/www/html/files/crypto/crypto-01/README.txt', 'w') as f:
+        f.write(readme)
+    
+    print('[+] Challenge files created successfully!')
+    print('[+] Files located at: /var/www/html/files/crypto/crypto-01/')
+
+
+if __name__ == '__main__':
+    create_encrypted_file()
+2. Decryption Script (solve_crypto01.py)
+This is the reference solution players should develop:
+#!/usr/bin/env python3
+"""
+CRYPTO-01 Solution Script
+Decrypts the multi-layer encrypted file
+"""
+
+
+import base64
+from Crypto.Cipher import AES
+from Crypto.Protocol.KDF import PBKDF2
+
+
+def rot47_decrypt(text):
+    """Decrypt ROT47 (same as encrypt, it's symmetric)"""
+    result = []
+    for char in text:
+        if 33 <= char <= 126:
+            rotated = ((char - 33 + 47) % 94) + 33
+            result.append(rotated)
+        else:
+            result.append(char)
+    return bytes(result)
+
+
+def base85_decode(data):
+    """Decode Base85"""
+    return base64.a85decode(data)
+
+
+def aes_decrypt(ciphertext, password):
+    """Decrypt AES-256-CBC"""
+    # Extract salt, IV, and ciphertext
+    salt = ciphertext[:16]
+    iv = ciphertext[16:32]
+    ct = ciphertext[32:]
+    
+    # Derive key
+    key = PBKDF2(password, salt, dkLen=32, count=100000)
+    
+    # Decrypt
+    cipher = AES.new(key, AES.MODE_CBC, iv)
+    plaintext = cipher.decrypt(ct)
+    
+    # Remove PKCS7 padding
+    padding_length = plaintext[-1]
+    return plaintext[:-padding_length]
+
+
+# Read encrypted file
+with open('encrypted_fragment.bin', 'rb') as f:
+    encrypted_data = f.read()
+
+
+print('[*] Decrypting CRYPTO-01...')
+
+
+# Step 1: ROT47 decrypt
+print('[+] Step 1: ROT47 decrypt')
+step1 = rot47_decrypt(encrypted_data)
+
+
+# Step 2: Base85 decode
+print('[+] Step 2: Base85 decode')
+step2 = base85_decode(step1)
+
+
+# Step 3: AES-256-CBC decrypt
+print('[+] Step 3: AES-256-CBC decrypt')
+flag = aes_decrypt(step2, b'ctf_crypto_2024')
+
+
+print(f'[+] Flag: {flag.decode()}')
+END OF CRYPTO-01 IMPLEMENTATION

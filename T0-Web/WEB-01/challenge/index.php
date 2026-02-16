@@ -58,5 +58,6 @@
             label.textContent = this.files[0] ? this.files[0].name : 'Choose file or drag here...';
         });
     </script>
+    <!-- Server Time: <?= time() ?> | Client IP: <?= $_SERVER['REMOTE_ADDR'] ?> -->
 </body>
 </html>

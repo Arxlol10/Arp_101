@@ -46,42 +46,6 @@
             </form>
         </div>
 
-        <?php
-        // List uploaded files in all subdirectories
-        $allFiles = [];
-        if (is_dir(UPLOAD_DIR)) {
-            $dirs = array_diff(scandir(UPLOAD_DIR), ['.', '..', '.htaccess', 'index.html']);
-            foreach ($dirs as $d) {
-                $subdir = UPLOAD_DIR . $d;
-                if (is_dir($subdir)) {
-                    $files = array_diff(scandir($subdir), ['.', '..']);
-                    foreach ($files as $f) {
-                        $allFiles[] = ['dir' => $d, 'name' => $f];
-                    }
-                }
-            }
-        }
-        ?>
-
-        <div class="gallery-section">
-            <h2>Recent Uploads</h2>
-            <?php if (empty($allFiles)): ?>
-                <p class="empty">No files uploaded yet.</p>
-            <?php else: ?>
-                <div class="file-grid">
-                    <?php foreach ($allFiles as $entry): ?>
-                        <div class="file-card">
-                            <div class="file-preview">
-                                <img src="uploads/<?= htmlspecialchars($entry['dir'] . '/' . $entry['name']) ?>"
-                                     alt="<?= htmlspecialchars($entry['name']) ?>"
-                                     onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2280%22 height=%2280%22><text y=%2250%22 x=%2220%22 font-size=%2240%22>📄</text></svg>'">
-                            </div>
-                            <span class="file-name"><?= htmlspecialchars($entry['name']) ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-        </div>
 
         <footer>
             <p>SecureShare v2.1.4 &copy; 2024 Corp Internal Tools</p>

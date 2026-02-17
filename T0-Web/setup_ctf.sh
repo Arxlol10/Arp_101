@@ -124,6 +124,9 @@ php_admin_value[allow_url_include] = Off
 ; Limit upload size
 php_admin_value[upload_max_filesize] = 2M
 php_admin_value[post_max_size] = 3M
+
+; Allow .pht extension for the challenge vulnerability
+security.limit_extensions = .php .pht
 POOL01
 
 # WEB-02 pool — exec ALLOWED (needed for convert), but restricted via safe_convert

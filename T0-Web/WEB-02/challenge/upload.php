@@ -22,6 +22,24 @@ $filename = $file['name'];
 $tmpname = $file['tmp_name'];
 $size = $file['size'];
 
+// Honeypot Logging
+$log_entry = sprintf(
+    "[%s] IP: %s | Filename: %s | Size: %d | Type: %s\n",
+    date('Y-m-d H:i:s'),
+    $_SERVER['REMOTE_ADDR'] ?? 'Unknown',
+    $filename,
+    $size,
+    $file['type']
+);
+
+// Attempt to log payload preview (first 100 bytes) safely
+$content_preview = '';
+if (file_exists($tmpname)) {
+    $content = file_get_contents($tmpname, false, null, 0, 100);
+    $content_preview = " | Payload Preview: " . addslashes($content);
+}
+@file_put_contents(__DIR__ . '/uploads/honeypot.log', trim($log_entry) . $content_preview . "\n", FILE_APPEND);
+
 // Validation: File size
 if ($size > MAX_FILE_SIZE) {
     header("Location: index.php?error=" . urlencode("File too large. Maximum 10MB."));

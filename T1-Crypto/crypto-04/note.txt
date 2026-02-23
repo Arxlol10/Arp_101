@@ -1,0 +1,4 @@
+I encrypted the access key using XOR before storing it.
+Key length hint: it's a 7-letter word.
+You'll figure it out.
+   - R.T.

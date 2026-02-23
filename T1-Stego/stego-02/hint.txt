@@ -1,0 +1,8 @@
+DTMF Tone Frequencies:
+1: 697Hz + 1209Hz    2: 697Hz + 1336Hz    3: 697Hz + 1477Hz
+4: 770Hz + 1209Hz    5: 770Hz + 1336Hz    6: 770Hz + 1477Hz
+7: 852Hz + 1209Hz    8: 852Hz + 1336Hz    9: 852Hz + 1477Hz
+0: 941Hz + 1336Hz
+
+The message is encoded as ASCII decimal values.
+Each character = 3 digits (e.g. 'A' = 065)

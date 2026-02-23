@@ -1,0 +1,4 @@
+=== Intercepted Message ===
+USAT{M1_JUVLNRKS_OGHCXXR_4KDB}
+
+(Encrypted with a polyalphabetic substitution cipher)

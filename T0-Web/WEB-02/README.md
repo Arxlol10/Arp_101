@@ -1,4 +1,8 @@
-# WEB-02: ImageTragick RCE
+# WEB-02: ImageTragick (Honeypot)
+
+> [!WARNING]
+> **HONEYPOT / RABBIT HOLE**
+> This challenge is intentionally configured as a honeypot. The underlying vulnerability (ImageTragick) is present in the code, but the environment is patched/broken to prevent actual exploitation. Usage of this challenge allows monitoring of attacker payloads via `uploads/honeypot.log`.
 
 | Field | Value |
 |-------|-------|

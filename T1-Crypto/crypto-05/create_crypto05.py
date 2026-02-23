@@ -1,28 +1,26 @@
 #!/usr/bin/env python3
 """
-CRYPTO-05 Challenge File Generator
-Encrypts flag with Vigenère cipher
+CRYPTO-05 Challenge File Generator — Vigenère (full printable ASCII range)
 Key: 'phantom'
-Players use Index of Coincidence / Kasiski / Friedman test to break it
+Operates on printable ASCII 32-126 (not just A-Z) for robustness with CTF flags.
 """
 
 import os
 
 FLAG = 'FLAG{t1_vigenere_cracked_4you}'
-KEY = 'phantom'
+KEY  = 'phantom'
+CHARSET_START = 32
+CHARSET_SIZE  = 95   # printable ASCII 32..126
 
 
 def vigenere_encrypt(plaintext, key):
-    """Vigenère encryption — only encrypts A-Z (uppercased), passes others as-is."""
+    """Full printable ASCII Vigenère (mod 95)."""
     result = []
-    key_upper = key.upper()
-    key_idx = 0
-    for char in plaintext.upper():
-        if char.isalpha():
-            shift = ord(key_upper[key_idx % len(key_upper)]) - ord('A')
-            encrypted = chr((ord(char) - ord('A') + shift) % 26 + ord('A'))
-            result.append(encrypted)
-            key_idx += 1
+    for i, char in enumerate(plaintext):
+        if CHARSET_START <= ord(char) <= 126:
+            shift = ord(key[i % len(key)]) - CHARSET_START
+            enc = chr((ord(char) - CHARSET_START + shift) % CHARSET_SIZE + CHARSET_START)
+            result.append(enc)
         else:
             result.append(char)
     return ''.join(result)
@@ -33,13 +31,16 @@ def create_readme(output_dir):
 Points: 250
 Difficulty: Medium
 
-An intercepted message. The encryption is a classic polyalphabetic cipher.
+An intercepted message. The encryption is a polyalphabetic cipher
+operating on the printable ASCII character set (32-126).
 
 Files:
   vigenere.txt  — The encrypted message
 
-Hint: The key is 7 characters. Try the Friedman or Kasiski test to confirm key length,
-      then frequency-analyse each column independently.
+Hints:
+  - Key length is 7 characters
+  - The cipher operates on all printable ASCII, not just A-Z (mod 95)
+  - Known plaintext: flags always start with FLAG{
 """
     with open(os.path.join(output_dir, 'README.txt'), 'w') as f:
         f.write(readme)
@@ -58,7 +59,7 @@ def main():
         f.write('=== Intercepted Message ===\n')
         f.write(ciphertext + '\n')
         f.write('\n')
-        f.write('(Encrypted with a polyalphabetic substitution cipher)\n')
+        f.write('(Polyalphabetic substitution cipher — printable ASCII)\n')
 
     create_readme(script_dir)
     print('[+] Challenge files created!')

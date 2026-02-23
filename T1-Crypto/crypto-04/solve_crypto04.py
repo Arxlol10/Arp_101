@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-CRYPTO-04 Solution Script
-Breaks repeating-key XOR cipher
-Approach: key length is given (7) — XOR each byte column with 0x00-0xFF
-          using frequency analysis (or brute-force since plaintext starts with FLAG{)
+CRYPTO-04 Solution Script — Repeating-key XOR
+Extended known-plaintext attack:
+  Flag format: FLAG{t1_..._m2n}
+  Known chars: F,L,A,G,{,t,1   maps to key positions 0,1,2,3,4,5,6
+  This gives us ALL 7 key bytes directly!
 """
 
 import os
@@ -14,33 +15,17 @@ def xor_decrypt(ciphertext, key):
     return bytes([ciphertext[i] ^ key[i % len(key)] for i in range(len(ciphertext))])
 
 
-def brute_force_xor(ciphertext, key_length):
-    """
-    Known-plaintext attack: FLAG{ is always the prefix.
-    This lets us recover the first 5 key bytes directly.
-    Then brute-force remaining key bytes.
-    """
-    known_prefix = b'FLAG{'
-    key = bytearray(key_length)
+def attack(ciphertext, key_length=7):
+    # Extended known plaintext: 'FLAG{t1' covers all 7 key positions
+    known_prefix = b'FLAG{t1'
+    assert len(known_prefix) >= key_length, 'Need at least key_length known bytes'
 
-    # Recover first min(len(prefix), key_length) key bytes
-    for i in range(min(len(known_prefix), key_length)):
+    key = bytearray(key_length)
+    for i in range(key_length):
         key[i] = ciphertext[i] ^ known_prefix[i]
 
-    # For remaining bytes, do frequency analysis or brute force
-    # (For 7-byte key: bytes 5, 6 unknown — brute force)
-    for b5 in range(256):
-        for b6 in range(256):
-            key[5] = b5
-            key[6] = b6
-            candidate = xor_decrypt(ciphertext, bytes(key))
-            # Check if result looks like a flag
-            if candidate.startswith(b'FLAG{') and candidate.endswith(b'}'):
-                try:
-                    decoded = candidate.decode('ascii')
-                    if all(32 <= ord(c) <= 126 for c in decoded):
-                        return bytes(key), candidate
-    return None, None
+    result = xor_decrypt(ciphertext, bytes(key))
+    return bytes(key), result
 
 
 def main():
@@ -49,6 +34,7 @@ def main():
 
     if not os.path.exists(cipher_path):
         print(f'[-] File not found: {cipher_path}')
+        print('    Run create_crypto04.py first.')
         sys.exit(1)
 
     with open(cipher_path, 'rb') as f:
@@ -56,16 +42,18 @@ def main():
 
     print('[*] Solving CRYPTO-04...')
     print(f'[+] Ciphertext ({len(ciphertext)} bytes): {ciphertext.hex()}')
-    print('[+] Known key length: 7 bytes (from note.txt)')
-    print('[+] Running known-plaintext + brute-force attack...')
+    print('[+] Known plaintext prefix: "FLAG{t1" (7 chars = entire key length)')
+    print('[+] Recovering all key bytes directly...')
 
-    key, flag = brute_force_xor(ciphertext, 7)
+    key, flag = attack(ciphertext, key_length=7)
 
-    if flag:
-        print(f'[+] Key found: {key} ({key.decode("ascii", errors="replace")})')
-        print(f'\n[+] FLAG: {flag.decode()}')
-    else:
-        print('[-] Attack failed.')
+    try:
+        key_str = key.decode('ascii')
+    except UnicodeDecodeError:
+        key_str = key.hex()
+
+    print(f'[+] Key recovered: {key_str}')
+    print(f'\n[+] FLAG: {flag.decode()}')
 
 
 if __name__ == '__main__':

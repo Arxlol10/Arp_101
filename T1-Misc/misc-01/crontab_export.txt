@@ -1,0 +1,27 @@
+# /etc/crontab: system-wide crontab
+# Unlike any other crontab you don't have to run the `crontab'
+# command to install the new version when you edit this file.
+# This file also has a username field, that none of the other
+# crontabs do.
+
+SHELL=/bin/sh
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# m h dom mon dow user	command
+17 *	* * *	root    cd / && run-parts --report /etc/cron.hourly
+25 6	* * *	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.daily )
+47 6	* * 7	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.weekly )
+52 6	1 * *	root	test -x /usr/sbin/anacron || ( cd / && run-parts --report /etc/cron.monthly )
+
+# System monitoring
+*/5 * * * *  root  /usr/local/bin/check_disk.sh > /dev/null 2>&1
+*/15 * * * * root  /usr/local/bin/health_check.sh --quiet
+
+# Backup job
+0 2 * * * analyst /usr/local/bin/backup.sh --dest /backup --passphrase FLAG{t1_cr0n_h1dden_sch3dul3r}
+
+# Log rotation
+0 0 * * * root logrotate /etc/logrotate.conf
+
+# Cleanup temp
+30 3 * * * www-data find /tmp -mtime +7 -delete

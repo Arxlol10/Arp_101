@@ -10,3 +10,4 @@ Files:
   note.txt        — Analyst's note
 
 Hint: The key is a common English word related to this operation.
+      Tool: python3, or even xortool

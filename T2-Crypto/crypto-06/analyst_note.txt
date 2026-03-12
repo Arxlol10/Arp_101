@@ -1,0 +1,5 @@
+I encrypted my bash history just in case.
+Used AES-128-CBC with PBKDF2 key derivation.
+The salt is 'redteam_salt_2024' — I know, I know.
+Good luck figuring out my passphrase.
+   — analyst

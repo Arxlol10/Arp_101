@@ -6,6 +6,7 @@ The validation logic uses XOR + shift + modular checks to verify a key.
 """
 
 import os
+import hashlib
 
 FLAG = 'FLAG{t2_r3v3rs3_v4l1d4t0r_q5z}'
 
@@ -97,7 +98,7 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-    with open(output_path, 'w') as f:
+    with open(output_path, 'w', encoding='utf-8') as f:
         f.write(source)
     print(f'[+] Validator: {output_path}')
 
@@ -133,7 +134,7 @@ def main():
 if __name__ == "__main__":
     main()
 '''
-    with open(output_path, 'w') as f:
+    with open(output_path, 'w', encoding='utf-8') as f:
         f.write(source)
     print(f'[+] Solver: {output_path}')
 
@@ -156,7 +157,7 @@ Approach:
   3. Figure out how to reverse the transformation
   4. Apply it to the _ENCODED array to recover the key
 """
-    with open(os.path.join(output_dir, 'README.txt'), 'w') as f:
+    with open(os.path.join(output_dir, 'README.txt'), 'w', encoding='utf-8') as f:
         f.write(readme)
 
 

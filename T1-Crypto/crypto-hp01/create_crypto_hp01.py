@@ -72,7 +72,7 @@ Can you decrypt it?
 
 WARNING: Not everything that glitters is gold.
 """
-    with open(os.path.join(output_dir, 'README.txt'), 'w') as f:
+    with open(os.path.join(output_dir, 'README.txt'), 'w', encoding='utf-8') as f:
         f.write(readme)
 
 
@@ -82,10 +82,10 @@ def main():
 
     n, e, c, m = create_rsa_honeypot()
 
-    with open(os.path.join(script_dir, 'rsa_params.txt'), 'w') as f:
+    with open(os.path.join(script_dir, 'rsa_params.txt'), 'w', encoding='utf-8') as f:
         f.write(f'n = {n}\ne = {e}\n')
 
-    with open(os.path.join(script_dir, 'ciphertext.txt'), 'w') as f:
+    with open(os.path.join(script_dir, 'ciphertext.txt'), 'w', encoding='utf-8') as f:
         f.write(f'{c}\n')
 
     # Verify solution works

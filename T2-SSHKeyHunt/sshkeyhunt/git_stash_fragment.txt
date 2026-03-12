@@ -1,0 +1,12 @@
+# Git stash data recovered from /opt/old_projects/.git
+# Extracted with: git stash show -p stash@{0}
+
+diff --git a/config/keys.txt b/config/keys.txt
+new file mode 100644
+index 0000000..a1b2c3d
+--- /dev/null
++++ b/config/keys.txt
+@@ -0,0 +1,3 @@
++# Key fragment — Part 4 of SSH assembly
++# Do not commit to main branch!
++PART4{git_stash_data}:fQ==

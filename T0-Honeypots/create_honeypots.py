@@ -47,7 +47,7 @@ Disallow: /server-status
 # TODO: rotate this before production launch
 """.format(flag=FAKE_FLAGS['robots'])
 
-    with open(filepath, 'w') as f:
+    with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] robots.txt created (fake flag: {FAKE_FLAGS["robots"]})')
 
@@ -347,7 +347,7 @@ Deployment locations:
 
 WARNING: Think before you submit! Each fake flag costs -50 points.
 """
-    with open(os.path.join(output_dir, 'README.txt'), 'w') as f:
+    with open(os.path.join(output_dir, 'README.txt'), 'w', encoding='utf-8') as f:
         f.write(readme)
 
 

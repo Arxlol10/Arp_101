@@ -94,7 +94,7 @@ INSERT INTO `binary_storage` VALUES
 
 -- Dump completed
 """
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] binary_storage.sql (Part 2 in key_fragment row)')
     return path
@@ -170,7 +170,7 @@ def create_bash_history(output_dir):
         lines.append(f'echo "{part3[part_idx]}" >> /dev/null  # key fragment')
         part_idx += 1
 
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write('\n'.join(lines) + '\n')
     print(f'[+] analyst_bash_history ({len(lines)} lines, Part 3 on every 7th)')
     return path
@@ -193,7 +193,7 @@ index 0000000..a1b2c3d
 +# Do not commit to main branch!
 +{PARTS[4]}
 """
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] git_stash_fragment.txt (Part 4)')
     return path
@@ -266,7 +266,7 @@ echo '4. Find Part 4: Explore /opt/old_projects/.git/'
 echo '5. Decode each PART base64 value and concatenate'
 echo "--- Flag: $FLAG ---"
 """
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] setup_sshkeyhunt.sh')
     return path
@@ -313,7 +313,7 @@ def main():
 if __name__ == '__main__':
     main()
 """
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] solve_sshkeyhunt.py')
     return path
@@ -341,7 +341,7 @@ Hints:
   - Look at unusual files in ~/.gnupg/, /var/backups/, /opt/
   - Check .bash_history for patterns
 """
-    with open(os.path.join(output_dir, 'README.txt'), 'w') as f:
+    with open(os.path.join(output_dir, 'README.txt'), 'w', encoding='utf-8') as f:
         f.write(readme)
 
 

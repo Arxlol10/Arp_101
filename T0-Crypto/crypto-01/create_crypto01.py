@@ -86,7 +86,7 @@ def create_encrypted_file():
 3. AES-256-CBC decrypt
    Password: ctf_crypto_2024
 """
-    with open(os.path.join(script_dir, 'hint.txt'), 'w') as f:
+    with open(os.path.join(script_dir, 'hint.txt'), 'w', encoding='utf-8') as f:
         f.write(hint)
 
     # Create README
@@ -98,7 +98,7 @@ Decrypt the file encrypted_fragment.bin to retrieve the flag.
 
 Check hint.txt for decryption order.
 """
-    with open(os.path.join(script_dir, 'README.txt'), 'w') as f:
+    with open(os.path.join(script_dir, 'README.txt'), 'w', encoding='utf-8') as f:
         f.write(readme)
 
     print('[+] Challenge files created successfully!')

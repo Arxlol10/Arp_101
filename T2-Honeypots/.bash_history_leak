@@ -1,0 +1,10 @@
+ls -la /home/engineer/
+cat /etc/passwd
+sudo -l
+find / -perm -4000 -type f 2>/dev/null
+getcap -r / 2>/dev/null
+echo "Saving key for later: FLAG{t2_h1story_tr4p}"
+ssh engineer@localhost
+cat /var/log/auth.log | grep engineer
+mysql -u root -p'S3cur3P@ss' -e 'show databases;'
+history -c

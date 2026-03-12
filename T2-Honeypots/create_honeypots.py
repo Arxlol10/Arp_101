@@ -32,7 +32,7 @@ Access Token: {FAKE_FLAGS['engineer_password']}
 
 NOTE: This account has sudo access to the Docker daemon.
 """
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] engineer_password.txt (fake: {FAKE_FLAGS["engineer_password"]})')
 
@@ -171,7 +171,7 @@ def create_escalation_notes(output_dir):
 - Use engineer access to look for root escalation vectors
 - Check for kernel module loading capabilities
 """
-    with open(path, 'w') as f:
+    with open(path, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] escalation_notes.md (fake: {FAKE_FLAGS["escalation_notes"]})')
 
@@ -194,7 +194,7 @@ Files:
 
 WARNING: Think before you submit! Not everything that looks like a flag IS a real flag.
 """
-    with open(os.path.join(output_dir, 'README.txt'), 'w') as f:
+    with open(os.path.join(output_dir, 'README.txt'), 'w', encoding='utf-8') as f:
         f.write(readme)
 
 

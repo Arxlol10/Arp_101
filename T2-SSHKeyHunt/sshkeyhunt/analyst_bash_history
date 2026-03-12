@@ -1,0 +1,245 @@
+ls -la /home/analyst/
+cat /etc/passwd
+find / -name "*.conf" 2>/dev/null
+grep -r "password" /etc/ 2>/dev/null
+sudo -l
+netstat -tlnp
+echo "P" >> /dev/null  # key fragment
+id
+uname -a
+ps aux | grep -i engineer
+cat /var/log/auth.log | tail -20
+mysql -u analyst -p
+ls /opt/
+echo "A" >> /dev/null  # key fragment
+file /usr/local/bin/log_reader
+getcap -r / 2>/dev/null
+ss -tlnp
+curl http://localhost:8080
+docker ps 2>/dev/null
+crontab -l
+echo "R" >> /dev/null  # key fragment
+mount
+lsblk
+df -h
+free -h
+top -bn1 | head -5
+dmesg | tail -20
+echo "T" >> /dev/null  # key fragment
+systemctl list-units --type=service
+last -10
+w
+who
+cat /proc/version
+cat /etc/os-release
+echo "3" >> /dev/null  # key fragment
+apt list --installed 2>/dev/null
+find /tmp -type f 2>/dev/null
+ls -la /dev/shm/
+cat /etc/crontab
+ls -la /etc/cron.d/
+find / -writable -type f 2>/dev/null
+echo "{" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "b" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "a" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "s" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "h" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "_" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "h" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "i" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "s" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "t" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "_" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "7" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "l" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "i" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "n" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "e" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "}" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo ":" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "b" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "W" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "J" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "s" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "M" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "2" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "R" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "f" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "Z" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "T" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "J" >> /dev/null  # key fragment
+ls
+pwd
+date
+uptime
+hostname
+clear
+echo "y" >> /dev/null  # key fragment

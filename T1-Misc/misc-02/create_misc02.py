@@ -99,7 +99,7 @@ Files:
 
 Tools: exiftool, Pillow, piexif, strings
 """
-    with open(os.path.join(script_dir, 'README.txt'), 'w') as f:
+    with open(os.path.join(script_dir, 'README.txt'), 'w', encoding='utf-8') as f:
         f.write(readme)
 
     print(f'[+] Flag in UserComment EXIF field: {FLAG}')

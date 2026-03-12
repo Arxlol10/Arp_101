@@ -46,7 +46,7 @@ def create_challenge_files():
     print(f'[+] MD5 hash of password: {md5_hash}')
 
     # Save hash
-    with open(os.path.join(script_dir, 'hash.txt'), 'w') as f:
+    with open(os.path.join(script_dir, 'hash.txt'), 'w', encoding='utf-8') as f:
         f.write(f'{md5_hash}\n')
         f.write('# Crack this hash to find the decryption password\n')
 
@@ -69,7 +69,7 @@ Step 2: Use the password to decrypt encrypted.bin
 
 Good luck!
 """
-    with open(os.path.join(script_dir, 'README.txt'), 'w') as f:
+    with open(os.path.join(script_dir, 'README.txt'), 'w', encoding='utf-8') as f:
         f.write(readme)
 
     print('[+] Honeypot challenge files created successfully!')

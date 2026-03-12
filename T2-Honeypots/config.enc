@@ -1,0 +1,9 @@
+# Encrypted Configuration File
+# Algorithm: AES-256-CBC
+# Decryption key: see /opt/tools/decrypt.sh
+#
+# --- BEGIN ENCRYPTED DATA ---
+RkxBR3t0Ml9jb25maWdfZDNjMHl9
+# --- END ENCRYPTED DATA ---
+#
+# Hint: The "encryption" is just base64. Or is it?

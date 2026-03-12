@@ -124,10 +124,12 @@ install_system_packages() {
         steghide exiftool binwalk foremost
         openssl
         sudo
+        gcc
+        libcap2-bin
     )
 
     apt-get install -y -qq "${PKGS[@]}" > /dev/null
-    pip3 install -q pycryptodome pillow stegano > /dev/null 2>&1 || true
+    pip3 install -q pycryptodome pillow stegano piexif > /dev/null 2>&1 || true
     log "System packages installed."
 }
 
@@ -249,8 +251,57 @@ setup_t0_honeypots() {
     fi
 
     info "═══ Setting up T0-Honeypots ═══"
-    # Future: detect sub-challenges and run their setups
     _run_tier_setup "T0-Honeypots" "$tier_dir"
+}
+
+###############################################################################
+# SECTION 4b — T1-HONEYPOTS
+###############################################################################
+setup_t1_honeypots() {
+    local tier_dir="${SCRIPT_DIR}/T1-Honeypots"
+
+    if ! should_setup "T1" "HONEYPOTS"; then
+        skip "T1-Honeypots (filtered out)"
+        return
+    fi
+
+    if ! dir_exists "$tier_dir"; then
+        skip "T1-Honeypots directory not found"
+        mark_skip "T1-Honeypots"
+        return
+    fi
+
+    info "═══ Setting up T1-Honeypots ═══"
+
+    local gen="${tier_dir}/create_honeypots.py"
+    if file_exists "$gen"; then
+        info "  → Running create_honeypots.py"
+        if [[ "$DRY_RUN" == true ]]; then
+            dry "python3 '$gen'"
+        else
+            if python3 "$gen" >> "$LOG_FILE" 2>&1; then
+                log "  T1-Honeypots generated OK"
+            else
+                error "  T1-Honeypots generation FAILED"
+                mark_fail "T1-Honeypots"
+                return
+            fi
+        fi
+
+        # Deploy decoy files
+        local deploy_dir="${DEPLOY_BASE}/t1/misc"
+        run_or_dry "mkdir -p '${deploy_dir}'"
+        for decoy in backup.zip credentials.txt secret_key.pem; do
+            if file_exists "${tier_dir}/${decoy}"; then
+                run_or_dry "cp '${tier_dir}/${decoy}' '${deploy_dir}/'"
+            fi
+        done
+        _set_deploy_perms "$deploy_dir"
+        mark_ok "T1-Honeypots (3 decoy files)"
+    else
+        skip "T1-Honeypots: create_honeypots.py not found"
+        mark_skip "T1-Honeypots"
+    fi
 }
 
 ###############################################################################
@@ -407,6 +458,59 @@ setup_t1_privesc() {
 }
 
 ###############################################################################
+# SECTION 10 — T2-BINARY
+###############################################################################
+setup_t2_binary() {
+    local tier_dir="${SCRIPT_DIR}/T2-Binary"
+
+    if ! should_setup "T2" "BINARY"; then
+        skip "T2-Binary (filtered out)"
+        return
+    fi
+
+    if ! dir_exists "$tier_dir"; then
+        skip "T2-Binary directory not found"
+        mark_skip "T2-Binary"
+        return
+    fi
+
+    info "═══ Setting up T2-Binary ═══"
+
+    _run_bash_setup "T2-BINARY-01 (Capability Abuse)" \
+        "${tier_dir}/binary-01/setup_binary01.sh"
+}
+
+###############################################################################
+# SECTION 11 — T2-CRYPTO
+###############################################################################
+setup_t2_crypto() {
+    local tier_dir="${SCRIPT_DIR}/T2-Crypto"
+
+    if ! should_setup "T2" "CRYPTO"; then
+        skip "T2-Crypto (filtered out)"
+        return
+    fi
+
+    if ! dir_exists "$tier_dir"; then
+        skip "T2-Crypto directory not found"
+        mark_skip "T2-Crypto"
+        return
+    fi
+
+    info "═══ Setting up T2-Crypto ═══"
+
+    local deploy_dir="${DEPLOY_BASE}/t2/crypto"
+    run_or_dry "mkdir -p '${deploy_dir}'"
+
+    _run_python_challenge "T2-CRYPTO-06 (Encrypted Bash History)" \
+        "${tier_dir}/crypto-06/create_crypto06.py" \
+        "${tier_dir}/crypto-06" \
+        "${deploy_dir}/crypto-06"
+
+    _set_deploy_perms "$deploy_dir"
+}
+
+###############################################################################
 # SECTION 10 — FUTURE TIERS (T2, T3, T4)
 # Auto-discovers and runs setup scripts as challenges are added
 ###############################################################################
@@ -414,15 +518,18 @@ setup_future_tiers() {
     local tiers=("T2" "T3" "T4")
 
     for tier in "${tiers[@]}"; do
-        if ! should_setup "$tier" "ANY"; then
-            continue
-        fi
 
         # Find all category dirs under this tier
         for tier_cat_dir in "${SCRIPT_DIR}/${tier}"-*/; do
             [[ -d "$tier_cat_dir" ]] || continue
             local cat_name
             cat_name="$(basename "$tier_cat_dir" | sed "s/${tier}-//")"
+            local cat_upper="${cat_name^^}"
+
+            if ! should_setup "$tier" "$cat_upper"; then
+                skip "${tier}-${cat_name} (filtered out)"
+                continue
+            fi
 
             info "═══ Checking ${tier}-${cat_name} ═══"
 
@@ -606,6 +713,29 @@ run_verification() {
         fi
     done
 
+    # T2-Binary: capability binary check
+    local log_reader="/usr/local/bin/log_reader"
+    if [[ -f "$log_reader" ]]; then
+        log "  T2-Binary: $log_reader exists"
+        if command -v getcap &>/dev/null; then
+            local caps
+            caps=$(getcap "$log_reader" 2>/dev/null || true)
+            if [[ -n "$caps" ]]; then
+                log "  T2-Binary: capabilities → $caps"
+            else
+                warn "  T2-Binary: no capabilities set on $log_reader"
+            fi
+        fi
+    else
+        warn "  T2-Binary: $log_reader not found (not set up yet)"
+    fi
+
+    # T2-Binary flag file
+    local binary_flag="/home/engineer/.flag_binary01"
+    if [[ -f "$binary_flag" ]]; then
+        log "  T2-Binary: flag file present at $binary_flag"
+    fi
+
     # Deployed challenge directories
     for dir in "${DEPLOY_BASE}"/t*/; do
         if dir_exists "$dir"; then
@@ -669,8 +799,13 @@ setup_t1_forensics
 setup_t1_crypto
 setup_t1_misc
 setup_t1_privesc
+setup_t1_honeypots
 
-# ── 4. Tiers 2, 3, 4 (auto-discovered) ───────────────────────────────────────
+# ── 4. Tier 2 (explicit) ─────────────────────────────────────────────────────
+setup_t2_binary
+setup_t2_crypto
+
+# ── 5. Remaining Tiers 2, 3, 4 (auto-discovered) ─────────────────────────────
 setup_future_tiers
 
 # ── 5. Restart services (if not dry-run) ────────────────────────────────────
@@ -723,10 +858,12 @@ echo ""
 echo -e "  📄 Full log: ${LOG_FILE}"
 echo ""
 echo -e "  ${BOLD}Challenge URLs (once deployed):${NC}"
-echo "    T0-Web-01  (Polyglot Upload)     http://<VM_IP>:8001"
-echo "    T0-Web-02  (ImageTragick RCE)    http://<VM_IP>:8002"
-echo "    T0-Web-03  (JWT Secret Leak)     http://<VM_IP>:8003"
-echo "    T1 Files                         ${DEPLOY_BASE}/t1/"
+echo "    T0-Web-01  (Polyglot Upload)       http://<VM_IP>:8001"
+echo "    T0-Web-02  (ImageTragick RCE)      http://<VM_IP>:8002"
+echo "    T0-Web-03  (JWT Secret Leak)       http://<VM_IP>:8003"
+echo "    T1 Files                           ${DEPLOY_BASE}/t1/"
+echo "    T2-Binary-01 (Capability Abuse)    /usr/local/bin/log_reader"
+echo "    T2-Crypto-06 (Encrypted History)   ${DEPLOY_BASE}/t2/crypto/"
 echo ""
 
 if [[ ${#SETUP_FAIL[@]} -gt 0 ]]; then

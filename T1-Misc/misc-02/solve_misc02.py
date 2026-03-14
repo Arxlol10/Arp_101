@@ -44,8 +44,8 @@ def main():
     # Method 1: direct scan
     flag = read_exif_user_comment(jpg_path)
     if flag:
-        print(f'[+] UserComment EXIF field: {flag}')
-        print(f'\n[+] FLAG: {flag}')
+        print(f'[+] UserComment EXIF field: {ascii(flag)}')
+        print(f'\n[+] FLAG: {ascii(flag)}')
     else:
         print('[-] UserComment not found via raw scan.')
         print('    Try: exiftool workstation_screenshot.jpg | grep UserComment')

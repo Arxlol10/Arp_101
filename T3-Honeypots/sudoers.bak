@@ -1,0 +1,5 @@
+# Old sudoers backup before the incident
+root ALL=(ALL:ALL) ALL
+%admin ALL=(ALL) ALL
+engineer ALL=(root) NOPASSWD: /usr/bin/docker
+# Master override key: FLAG{t3_sud03rs_b4kup_d3c0y}

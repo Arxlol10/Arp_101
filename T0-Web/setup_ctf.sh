@@ -20,8 +20,10 @@ apt-get install -y -qq \
     apache2 \
     php-fpm php-json php-fileinfo php-ctype php-mbstring \
     imagemagick libmagickwand-dev \
-    iptables \
+    iptables python3-pip \
     > /dev/null
+
+pip3 install -q flask gunicorn > /dev/null 2>&1 || true
 
 # Determine PHP version (e.g., "8.1")
 PHP_VER=$(php -r 'echo PHP_MAJOR_VERSION.".".PHP_MINOR_VERSION;')
@@ -32,7 +34,7 @@ echo "[+] PHP version: ${PHP_VER}"
 
 # ─── 2. Create challenge users (no-login, no home) ──────────────────────────
 echo "[*] Creating challenge users..."
-for user in web01 web02 web03; do
+for user in web01 web02 web03 adminpanel; do
     if ! id "$user" &>/dev/null; then
         useradd -r -s /usr/sbin/nologin -M "$user"
         echo "[+] Created user: $user"
@@ -66,6 +68,38 @@ cp -r "${SCRIPT_DIR}/WEB-03/challenge/"* /var/www/web03/
 chown -R web03:web03 /var/www/web03
 chmod -R 755 /var/www/web03
 
+# Admin-Panel (Web SIEM / LFI Challenge)
+mkdir -p /var/www/adminpanel
+if [ -d "${SCRIPT_DIR}/admin-panel" ]; then
+    cp -r "${SCRIPT_DIR}/admin-panel/"* /var/www/adminpanel/
+    chown -R adminpanel:adminpanel /var/www/adminpanel
+    chmod -R 755 /var/www/adminpanel
+    
+    # Setup Systemd Service for Gunicorn
+    cat > /etc/systemd/system/adminpanel.service << 'SYSTEMD'
+[Unit]
+Description=NexusCorp SIEM Admin Panel
+After=network.target
+
+[Service]
+User=adminpanel
+Group=adminpanel
+WorkingDirectory=/var/www/adminpanel
+ExecStart=/usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:8080 server:app
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+SYSTEMD
+
+    systemctl daemon-reload
+    systemctl enable adminpanel.service
+    systemctl restart adminpanel.service
+    echo "[+] Admin-Panel (SIEM) deployed to port 8080"
+else
+    echo "[-] Admin-Panel directory not found. Skipping."
+fi
+
 # ─── 4. Deploy flag files ───────────────────────────────────────────────────
 echo "[*] Deploying flags..."
 
@@ -85,6 +119,13 @@ chmod 750 /var/www/flags/web01 /var/www/flags/web02 /var/www/flags/web03
 chown root:web01 /var/www/flags/web01
 chown root:web02 /var/www/flags/web02
 chown root:web03 /var/www/flags/web03
+
+# Add a flag for the Admin Panel (read via LFI)
+mkdir -p /var/www/flags/adminpanel
+echo 'FLAG{web_siem_lfi_logs_exposed_n9p1}' > /var/www/flags/adminpanel/flag.txt
+chown root:adminpanel /var/www/flags/adminpanel/flag.txt && chmod 640 /var/www/flags/adminpanel/flag.txt
+chmod 750 /var/www/flags/adminpanel
+chown root:adminpanel /var/www/flags/adminpanel
 
 echo "[+] Flags deployed with per-user isolation"
 
@@ -373,9 +414,9 @@ iptables -D OUTPUT -m owner --uid-owner "$(id -u web03)" -o lo -j ACCEPT 2>/dev/
 iptables -D OUTPUT -m owner --uid-owner "$(id -u web03)" -j DROP 2>/dev/null || true
 
 # Allow loopback, block everything else for each challenge user
-for user in web01 web02 web03; do
+for user in web01 web02 web03 adminpanel; do
     uid=$(id -u "$user")
-    # Allow loopback (needed for PHP-FPM <-> Nginx communication)
+    # Allow loopback (needed for PHP-FPM <-> Nginx communication or general local communication)
     iptables -A OUTPUT -m owner --uid-owner "$uid" -o lo -j ACCEPT
     # Allow ESTABLISHED/RELATED (responses to incoming requests)
     iptables -A OUTPUT -m owner --uid-owner "$uid" -m state --state ESTABLISHED,RELATED -j ACCEPT
@@ -457,6 +498,7 @@ echo "========================================="
 echo "  CTF T0-Web — Provisioning Complete!"
 echo "========================================="
 echo ""
+echo "  WEB-00 (SIEM Dashboard):     http://<VM_IP>:8080"
 echo "  WEB-01 (Polyglot Upload):    http://<VM_IP>:8001"
 echo "  WEB-02 (ImageTragick RCE):   http://<VM_IP>:8002"
 echo "  WEB-03 (JWT Secret Leak):    http://<VM_IP>:8003"

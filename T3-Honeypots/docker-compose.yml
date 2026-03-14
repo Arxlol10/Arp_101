@@ -1,0 +1,12 @@
+version: '3.8'
+services:
+  web:
+    image: nginx:latest
+    ports:
+      - "80:80"
+  db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: supersecretpassword
+      FLAG_OVERRIDE: FLAG{t3_d0ck3r_c0mp0s3_f4k3}

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusCorp | Infrastructure Admin Panel</title>
+    <!-- Modern Font: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-network-wired text-gradient"></i>
+                    <span>NexusCorp</span>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <ul>
+                    <li class="active"><a href="#"><i class="fa-solid fa-chart-line"></i> Dashboard</a></li>
+                    <li><a href="#"><i class="fa-solid fa-users"></i> User Access</a></li>
+                    <li><a href="#"><i class="fa-solid fa-server"></i> Servers</a></li>
+                    <li><a href="#"><i class="fa-solid fa-shield-halved"></i> Security Controls</a></li>
+                    <!-- Hidden link, part of the CTF vulnerability -->
+                    <li class="admin-hidden"><a href="/api/v1/debug/logs?file=syslog"><i class="fa-solid fa-bug"></i> Debug Diagnostics</a></li>
+                    <li><a href="#"><i class="fa-solid fa-gear"></i> Settings</a></li>
+                </ul>
+            </nav>
+            <div class="sidebar-footer">
+                <div class="user-profile">
+                    <div class="avatar">G</div>
+                    <div class="user-info">
+                        <span class="user-name">Guest OS</span>
+                        <span class="user-role">Read-Only</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="search-bar">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input type="text" placeholder="Search logs, events, or IP addresses...">
+                </div>
+                <div class="nav-actions">
+                    <button class="icon-btn" aria-label="Notifications"><i class="fa-regular fa-bell"></i><span class="badge">3</span></button>
+                    <button class="icon-btn" aria-label="Dark Mode"><i class="fa-regular fa-moon"></i></button>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <!-- Top KPI Cards -->
+                <div class="kpi-card glassmorphism">
+                    <div class="kpi-icon"><i class="fa-solid fa-microchip text-blue"></i></div>
+                    <div class="kpi-info">
+                        <h3>Active Nodes</h3>
+                        <p class="kpi-value">24 / 25</p>
+                        <span class="status healthy"><i class="fa-solid fa-circle-check"></i> Nominal</span>
+                    </div>
+                </div>
+                <div class="kpi-card glassmorphism">
+                    <div class="kpi-icon"><i class="fa-solid fa-user-shield text-purple"></i></div>
+                    <div class="kpi-info">
+                        <h3>Active Roles</h3>
+                        <p class="kpi-value">4 Tiers</p>
+                        <span class="status info">www-data, analyst, engineer, root</span>
+                    </div>
+                </div>
+                <div class="kpi-card glassmorphism">
+                    <div class="kpi-icon"><i class="fa-solid fa-triangle-exclamation text-red"></i></div>
+                    <div class="kpi-info">
+                        <h3>Security Events</h3>
+                        <p class="kpi-value">142</p>
+                        <span class="status warning"><i class="fa-solid fa-arrow-trend-up"></i> +12% since yesterday</span>
+                    </div>
+                </div>
+                <div class="kpi-card glassmorphism">
+                    <div class="kpi-icon"><i class="fa-solid fa-database text-green"></i></div>
+                    <div class="kpi-info">
+                        <h3>Data Intake</h3>
+                        <p class="kpi-value">1.4 TB/d</p>
+                        <span class="status healthy">Stable</span>
+                    </div>
+                </div>
+
+                <!-- Live System Logs Chart/Area -->
+                <div class="widget large log-widget glassmorphism">
+                    <div class="widget-header">
+                        <h2>System Audit Logs</h2>
+                        <button class="btn-secondary">Export to CSV</button>
+                    </div>
+                    <div class="terminal-container">
+                        <div class="terminal-header">
+                            <span class="dot red"></span><span class="dot yellow"></span><span class="dot green"></span>
+                            <span class="terminal-title">/var/log/auth.log tail -f</span>
+                        </div>
+                        <div class="terminal-body" id="log-feed">
+                            <div class="log-line"><span class="timestamp">[12:00:01]</span> <span class="host">web-front-01</span> <span class="service">nginx[1022]:</span> <span class="message">Connection accepted from 192.168.1.45</span></div>
+                            <div class="log-line"><span class="timestamp">[12:00:05]</span> <span class="host">db-cluster</span> <span class="service">mysql[411]:</span> <span class="message">User 'analyst' logged in successfully from 10.0.0.12</span></div>
+                            <div class="log-line"><span class="timestamp">[12:01:14]</span> <span class="host">bastion-host</span> <span class="service">sshd[8922]:</span> <span class="message warning">Failed password for invalid user admin from 203.0.113.42 port 49112</span></div>
+                            <div class="log-line"><span class="timestamp">[12:02:40]</span> <span class="host">app-server-04</span> <span class="service">sudo[1442]:</span> <span class="message">www-data : COMMAND=/usr/bin/node /opt/app/server.js</span></div>
+                            <div class="log-line"><span class="timestamp">[12:03:00]</span> <span class="host">core-router</span> <span class="service">netd[99]:</span> <span class="message">Interface eth1 link DOWN</span></div>
+                            <div class="log-line"><span class="timestamp">[12:03:02]</span> <span class="host">mgt-node-01</span> <span class="service">cron[442]:</span> <span class="message info">engineer user executing daily backup script</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Active Alerts -->
+                <div class="widget small glassmorphism">
+                    <div class="widget-header">
+                        <h2>Critical Alerts</h2>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <ul class="alert-list">
+                        <li class="alert-item high">
+                            <div class="alert-icon"><i class="fa-solid fa-radiation"></i></div>
+                            <div class="alert-content">
+                                <h4>Unauthorized Access Attempt</h4>
+                                <p>Multiple failed logins detected on bastion-host.</p>
+                            </div>
+                            <span class="alert-time">2m ago</span>
+                        </li>
+                        <li class="alert-item medium">
+                            <div class="alert-icon"><i class="fa-solid fa-code-commit"></i></div>
+                            <div class="alert-content">
+                                <h4>System Update Pending</h4>
+                                <p>Kernel update available for production nodes.</p>
+                            </div>
+                            <span class="alert-time">1h ago</span>
+                        </li>
+                        <li class="alert-item low">
+                            <div class="alert-icon"><i class="fa-solid fa-hard-drive"></i></div>
+                            <div class="alert-content">
+                                <h4>Storage Warning</h4>
+                                <p>Volume /data is 85% full.</p>
+                            </div>
+                            <span class="alert-time">3h ago</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- CTF Note:
+         The players should notice the "Roles" mentioned in the logs and KPIs.
+         The source code has a commented out or hidden Developer Diagnostics link.
+         Perhaps the `/api/v1/debug/logs?file=` endpoint will be built in python to allow LFI.
+    -->
+    <script>
+        // Simulate live logs
+        const logs = [
+            "[12:05:12] web-front-01 nginx[1022]: Request processed in 45ms",
+            "[12:06:22] db-cluster mysql[411]: Query executed by 'analyst'",
+            "[12:08:05] mgt-node-01 sudo[881]: engineer : COMMAND=/usr/bin/docker-compose up -d",
+            "[12:10:45] bastion-host sshd[8922]: Connection closed by 192.168.1.100",
+            "[12:11:00] app-server-04 node[2411]: Starting worker process... OK"
+        ];
+        const logFeed = document.getElementById('log-feed');
+        let index = 0;
+
+        setInterval(() => {
+            if (index < logs.length) {
+                const parts = logs[index].split(' ');
+                const timestamp = parts[0];
+                const host = parts[1];
+                const service = parts[2];
+                const message = parts.slice(3).join(' ');
+
+                const logDiv = document.createElement('div');
+                logDiv.className = 'log-line new-log';
+                logDiv.innerHTML = `<span class="timestamp">${timestamp}</span> <span class="host">${host}</span> <span class="service">${service}</span> <span class="message">${message}</span>`;
+                
+                logFeed.appendChild(logDiv);
+                logFeed.scrollTop = logFeed.scrollHeight;
+                index++;
+            } else {
+                index = 0; // loop
+            }
+        }, 8000);
+    </script>
+</body>
+</html>

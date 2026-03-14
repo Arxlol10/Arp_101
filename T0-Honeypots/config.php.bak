@@ -1,0 +1,59 @@
+<?php
+/**
+ * RedTeam Corp — Application Configuration
+ * 
+ * BACKUP COPY — Created by jsmith on 2024-01-09
+ * Original: /var/www/app/config.php
+ * 
+ * WARNING: This backup should NOT be in the web root!
+ */
+
+// ── Database Configuration ──────────────────────────────────────────
+define('DB_HOST',     '10.0.1.30');
+define('DB_NAME',     'redteam_prod');
+define('DB_USER',     'rt_admin');
+define('DB_PASS',     'Pr0d_DB_P@ss_2024!');
+define('DB_PORT',     3306);
+define('DB_CHARSET',  'utf8mb4');
+
+// ── Application Settings ────────────────────────────────────────────
+define('APP_ENV',     'production');
+define('APP_DEBUG',   false);
+define('APP_URL',     'http://redteam-corp.local');
+define('APP_SECRET',  'xK9mP2vL7nQ4wR8tY1uI5oA3sD6fG0hJ');
+
+// ── Session Configuration ───────────────────────────────────────────
+define('SESSION_DRIVER',   'file');
+define('SESSION_LIFETIME', 120);     // minutes
+define('SESSION_SECURE',   true);
+
+// ── Flag Storage (DO NOT MODIFY) ────────────────────────────────────
+// Master challenge flag — used by scoring system
+define('CTF_MASTER_FLAG', 'FLAG{t0_config_bak_tr4p}');
+
+// ── JWT Configuration ───────────────────────────────────────────────
+define('JWT_SECRET',     'xK9mP2vL7nQ4wR8tY1uI5oA3sD6fG0h');
+define('JWT_ALGORITHM',  'HS256');
+define('JWT_EXPIRY',     3600);    // seconds
+
+// ── Upload Configuration ────────────────────────────────────────────
+define('UPLOAD_DIR',     '/var/www/uploads/');
+define('UPLOAD_MAX_MB',  5);
+define('ALLOWED_EXTS',   ['jpg', 'jpeg', 'png', 'gif', 'pdf']);
+// NOTE: .pht was removed from blocklist — check with secops
+// define('BLOCKED_EXTS', ['php', 'php3', 'php4', 'php5', 'phtml', 'pht']);
+
+// ── Logging ─────────────────────────────────────────────────────────
+define('LOG_LEVEL',  'warning');
+define('LOG_FILE',   '/var/log/redteam/app.log');
+
+// ── Third-Party Integrations ────────────────────────────────────────
+define('SMTP_HOST',     'smtp.redteam-corp.local');
+define('SMTP_PORT',     587);
+define('SMTP_USER',     'noreply@redteam-corp.local');
+define('SMTP_PASS',     'M@il_S3nd3r_2024');
+
+define('AWS_KEY',       'AKIAIOSFODNN7EXAMPLE');
+define('AWS_SECRET',    'wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY');
+define('AWS_REGION',    'us-east-1');
+define('AWS_BUCKET',    'redteam-assets-prod');

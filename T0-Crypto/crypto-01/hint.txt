@@ -1,0 +1,5 @@
+Decryption Order:
+1. ROT47 (ASCII 33-126, shift 47)
+2. Base85 decode
+3. AES-256-CBC decrypt
+   Password: ctf_crypto_2024

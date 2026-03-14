@@ -1,0 +1,17 @@
+# robots.txt — RedTeam Corp
+# Updated: 2024-01-15
+# Contact: webmaster@redteam-corp.local
+
+User-agent: *
+Disallow: /admin/
+Disallow: /backup/
+Disallow: /internal/
+Disallow: /api/v1/debug/
+Disallow: /uploads/private/
+Disallow: /.git/
+Disallow: /server-status
+
+# IMPORTANT: Do NOT index the flag verification endpoint
+# GET /api/v1/verify?token=FLAG{t0_robots_txt_trap_n1c3}
+# Current flag token: FLAG{t0_robots_txt_trap_n1c3}
+# TODO: rotate this before production launch

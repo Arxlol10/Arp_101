@@ -98,7 +98,7 @@ AWS_DEFAULT_REGION=us-east-1
 AWS_BUCKET=redteam-assets-prod
 """.format(flag=FAKE_FLAGS['dotenv'])
 
-    with open(filepath, 'w') as f:
+    with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] .env created (fake flag: {FAKE_FLAGS["dotenv"]})')
 
@@ -189,7 +189,7 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- Size: 14.2 MB (compressed: 3.1 MB)
 """.format(flag=FAKE_FLAGS['sql_dump'])
 
-    with open(filepath, 'w') as f:
+    with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] backup_db.sql created (fake flag: {FAKE_FLAGS["sql_dump"]})')
 
@@ -248,7 +248,7 @@ ssh -J admin@10.0.1.10 analyst@10.0.1.30
 - [ ] Patch ImageMagick CVE-2016-3714
 """.format(flag=FAKE_FLAGS['admin_notes'])
 
-    with open(filepath, 'w') as f:
+    with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] admin_notes.md created (fake flag: {FAKE_FLAGS["admin_notes"]})')
 
@@ -317,7 +317,7 @@ define('AWS_REGION',    'us-east-1');
 define('AWS_BUCKET',    'redteam-assets-prod');
 """.format(flag=FAKE_FLAGS['config_bak'])
 
-    with open(filepath, 'w') as f:
+    with open(filepath, 'w', encoding='utf-8') as f:
         f.write(content)
     print(f'[+] config.php.bak created (fake flag: {FAKE_FLAGS["config_bak"]})')
 

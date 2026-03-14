@@ -129,7 +129,7 @@ install_system_packages() {
     )
 
     apt-get install -y -qq "${PKGS[@]}" > /dev/null
-    pip3 install -q pycryptodome pillow stegano piexif > /dev/null 2>&1 || true
+    pip3 install -q pycryptodome pillow stegano piexif scapy > /dev/null 2>&1 || true
     log "System packages installed."
 }
 
@@ -157,6 +157,7 @@ setup_t0_web() {
     if file_exists "$web_setup"; then
         info "  → Running T0-Web/setup_ctf.sh"
         run_or_dry "bash '$web_setup'"
+        mark_ok "T0-WEB-00 (SIEM Admin Panel)"
         mark_ok "T0-WEB-01 (Polyglot Upload)"
         mark_ok "T0-WEB-02 (ImageTragick RCE)"
         mark_ok "T0-WEB-03 (JWT Secret Leak)"
@@ -511,74 +512,37 @@ setup_t2_crypto() {
 }
 
 ###############################################################################
-# SECTION 10 — FUTURE TIERS (T2, T3, T4)
-# Auto-discovers and runs setup scripts as challenges are added
+# SECTION 12 — T3 (ENGINEER DEPLOYMENTS)
 ###############################################################################
-setup_future_tiers() {
-    local tiers=("T2" "T3" "T4")
+setup_t3() {
+    if ! should_setup "T3" ""; then skip "T3 (filtered out)"; return; fi
+    info "═══ Setting up T3 ═══"
+    
+    _run_bash_setup "T3-BINARY-02 (Format String)" "${SCRIPT_DIR}/T3-Binary/binary-02/setup_binary02.sh"
+    _run_bash_setup "T3-BINARY-03 (Heap Overflow)" "${SCRIPT_DIR}/T3-Binary/binary-03/setup_binary03.sh"
+    _run_bash_setup "T3-NETWORK-01 (Port Knocking)" "${SCRIPT_DIR}/T3-Network/network-01/setup_network01.sh"
+    _run_bash_setup "T3-PRIVESC-03 (Kernel Module)" "${SCRIPT_DIR}/T3-PrivEsc/privesc-03/setup_privesc03.sh"
+    
+    local deploy_dir="${DEPLOY_BASE}/t3/misc"
+    run_or_dry "mkdir -p '${deploy_dir}'"
+    _run_python_challenge "T3-MISC-05 (Obfuscated Logs)" "${SCRIPT_DIR}/T3-Misc/misc-05/create_misc05.py" "${SCRIPT_DIR}/T3-Misc/misc-05" "${deploy_dir}/misc-05"
+    _run_python_challenge "T3-HONEYPOTS" "${SCRIPT_DIR}/T3-Honeypots/create_honeypots.py" "${SCRIPT_DIR}/T3-Honeypots" ""
+}
 
-    for tier in "${tiers[@]}"; do
-
-        # Find all category dirs under this tier
-        for tier_cat_dir in "${SCRIPT_DIR}/${tier}"-*/; do
-            [[ -d "$tier_cat_dir" ]] || continue
-            local cat_name
-            cat_name="$(basename "$tier_cat_dir" | sed "s/${tier}-//")"
-            local cat_upper="${cat_name^^}"
-
-            if ! should_setup "$tier" "$cat_upper"; then
-                skip "${tier}-${cat_name} (filtered out)"
-                continue
-            fi
-
-            info "═══ Checking ${tier}-${cat_name} ═══"
-
-            # Try to find a setup script
-            local found_setup=false
-            for setup_script in "${tier_cat_dir}"setup_ctf.sh "${tier_cat_dir}"setup.sh; do
-                if file_exists "$setup_script"; then
-                    info "  → Running $(basename "$setup_script")"
-                    run_or_dry "bash '$setup_script'"
-                    mark_ok "${tier}-${cat_name}"
-                    found_setup=true
-                    break
-                fi
-            done
-
-            # If no setup script, scan for sub-challenge generators
-            if [[ "$found_setup" == false ]]; then
-                local any_found=false
-                for challenge_dir in "${tier_cat_dir}"*/; do
-                    [[ -d "$challenge_dir" ]] || continue
-                    local ch_name
-                    ch_name="$(basename "$challenge_dir")"
-
-                    # Auto-detect Python generator
-                    for py_gen in "${challenge_dir}"create_*.py "${challenge_dir}"generate_*.py; do
-                        if file_exists "$py_gen"; then
-                            _run_python_challenge "${tier}-${cat_name^^}-${ch_name^^}" "$py_gen"
-                            any_found=true
-                            break
-                        fi
-                    done
-
-                    # Auto-detect Bash setup
-                    for sh_setup in "${challenge_dir}"setup_*.sh "${challenge_dir}"setup.sh; do
-                        if file_exists "$sh_setup"; then
-                            _run_bash_setup "${tier}-${cat_name^^}-${ch_name^^}" "$sh_setup"
-                            any_found=true
-                            break
-                        fi
-                    done
-                done
-
-                if [[ "$any_found" == false ]]; then
-                    skip "${tier}-${cat_name}: no setup script or generator found yet"
-                    mark_skip "${tier}-${cat_name}"
-                fi
-            fi
-        done
-    done
+###############################################################################
+# SECTION 13 — T4 (ROOT DEPLOYMENTS)
+###############################################################################
+setup_t4() {
+    if ! should_setup "T4" ""; then skip "T4 (filtered out)"; return; fi
+    info "═══ Setting up T4 ═══"
+    
+    # Generate challenges directly in /root/ for standard execution or in a target deploy dir
+    local deploy_dir="/root/T4"
+    run_or_dry "mkdir -p '${deploy_dir}'"
+    
+    _run_python_challenge "T4-ROOT-01 (Final Decryption)" "${SCRIPT_DIR}/T4-RootChallenges/root-01/create_root01.py" "${SCRIPT_DIR}/T4-RootChallenges/root-01" "${deploy_dir}/root-01"
+    _run_python_challenge "T4-ROOT-02 (Master Assembly)" "${SCRIPT_DIR}/T4-RootChallenges/root-02/create_root02.py" "${SCRIPT_DIR}/T4-RootChallenges/root-02" "${deploy_dir}/root-02"
+    _run_python_challenge "T4-HONEYPOTS" "${SCRIPT_DIR}/T4-Honeypots/create_honeypots.py" "${SCRIPT_DIR}/T4-Honeypots" "${deploy_dir}/honeypots"
 }
 
 ###############################################################################
@@ -687,7 +651,7 @@ run_verification() {
     local all_ok=true
 
     # Web services
-    for port in 8001 8002 8003; do
+    for port in 8001 8002 8003 8080; do
         if curl -sf --max-time 3 "http://localhost:${port}/" > /dev/null 2>&1; then
             log "  Port ${port}: UP"
         else
@@ -736,6 +700,14 @@ run_verification() {
         log "  T2-Binary: flag file present at $binary_flag"
     fi
 
+    # T3 / T4 validation
+    local vuln_device="/dev/vuln_device"
+    if [[ -c "$vuln_device" ]]; then
+        log "  T3-PrivEsc: $vuln_device module loaded"
+    else
+        warn "  T3-PrivEsc: $vuln_device not found (module not loaded)"
+    fi
+
     # Deployed challenge directories
     for dir in "${DEPLOY_BASE}"/t*/; do
         if dir_exists "$dir"; then
@@ -744,7 +716,7 @@ run_verification() {
     done
 
     # iptables outbound drop rules for challenge users
-    for user in web01 web02 web03; do
+    for user in web01 web02 web03 adminpanel; do
         if id "$user" &>/dev/null 2>&1; then
             local uid
             uid=$(id -u "$user")
@@ -805,8 +777,11 @@ setup_t1_honeypots
 setup_t2_binary
 setup_t2_crypto
 
-# ── 5. Remaining Tiers 2, 3, 4 (auto-discovered) ─────────────────────────────
-setup_future_tiers
+# ── 5. Tier 3 ─────────────────────────────
+setup_t3
+
+# ── 6. Tier 4 ─────────────────────────────
+setup_t4
 
 # ── 5. Restart services (if not dry-run) ────────────────────────────────────
 if [[ "$DRY_RUN" == false ]]; then
@@ -858,12 +833,16 @@ echo ""
 echo -e "  📄 Full log: ${LOG_FILE}"
 echo ""
 echo -e "  ${BOLD}Challenge URLs (once deployed):${NC}"
+echo "    T0-Web-00  (SIEM Admin Panel)      http://<VM_IP>:8080"
 echo "    T0-Web-01  (Polyglot Upload)       http://<VM_IP>:8001"
 echo "    T0-Web-02  (ImageTragick RCE)      http://<VM_IP>:8002"
 echo "    T0-Web-03  (JWT Secret Leak)       http://<VM_IP>:8003"
 echo "    T1 Files                           ${DEPLOY_BASE}/t1/"
 echo "    T2-Binary-01 (Capability Abuse)    /usr/local/bin/log_reader"
 echo "    T2-Crypto-06 (Encrypted History)   ${DEPLOY_BASE}/t2/crypto/"
+echo "    T3-Binary-02 / 03 (SUID Exploits)  /usr/local/bin/"
+echo "    T3-Network-01 (Knockd service)     syslog / internal HTTP"
+echo "    T4-Root (Final Mastery)            /root/T4"
 echo ""
 
 if [[ ${#SETUP_FAIL[@]} -gt 0 ]]; then

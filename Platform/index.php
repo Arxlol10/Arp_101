@@ -17,9 +17,8 @@ $T1_FLAGS = [
     'FLAG{t1_su1d_find_privesc_9z2}',
 ];
 
-// ── All honeypot flags (27 total — logged on submission) ──────────────────
+// ── All 27 honeypot flags ─────────────────────────────────────────────────
 $HONEYPOTS = [
-    // T0
     'FLAG{t0_robots_txt_trap_n1c3}',
     'FLAG{t0_dotenv_exposed_g0tcha}',
     'FLAG{t0_sql_dump_fake_fl4g}',
@@ -27,14 +26,12 @@ $HONEYPOTS = [
     'FLAG{t0_config_bak_tr4p}',
     'FLAG{too_easy_try_harder}',
     'FLAG{nice_try_keep_looking}',
-    // T1
     'FLAG{t1_backup_found_nope}',
     'FLAG{t1_creds_too_obvious}',
     'FLAG{t1_pem_not_real_key}',
     'FLAG{t1_rsa_small_e_gotcha}',
     'FLAG{t1_log_grep_too_easy}',
     'FLAG{t1_sudo_trap_gotcha}',
-    // T2
     'FLAG{t2_eng_pass_tr4p}',
     'FLAG{t2_s3cret_key_f4ke}',
     'FLAG{t2_db_backup_n0pe}',
@@ -42,18 +39,16 @@ $HONEYPOTS = [
     'FLAG{t2_config_d3c0y}',
     'FLAG{t2_h1story_tr4p}',
     'FLAG{t2_n0tes_g0tcha}',
-    // T3
     'FLAG{t3_hp_ssh_key_h1dd3n_m4k}',
     'FLAG{t3_hp_l0gs_gr3p_f00l}',
     'FLAG{t3_hp_db_dump_j4g}',
     'FLAG{t3_hp_zip_cr4ck_d0y}',
     'FLAG{t3_hp_h1dd3n_txt_p2s}',
-    // T4
     'FLAG{t4_hp_ssh_z1p_f4k3_c9k}',
     'FLAG{t4_hp_b4sh_h1st_curl_x2a}',
 ];
 
-// ── All real flags (for "flag recognised" feedback) ───────────────────────
+// ── All real flags (for direction feedback only) ──────────────────────────
 $ALL_REAL = array_merge([$T0_UNLOCK_FLAG], $T1_FLAGS, [
     'FLAG{web_01_polyglot_upload_bypass_k8m3}',
     'FLAG{web_02_imagetragick_rce_p9n7}',
@@ -95,7 +90,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$t1_unlocked) {
             $_SESSION['t1_unlocked'] = true;
             $t1_unlocked = true;
-            $msg      = '✔ Flag accepted. Tier 1 files are now unlocked.';
+            $msg = '✔ Flag accepted. Tier 1 files are now unlocked.';
             $msg_type = 'ok';
         } else {
             $msg = 'Tier 1 already unlocked.'; $msg_type = 'warn';
@@ -103,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } elseif (in_array($flag, $T1_FLAGS, true)) {
         if (!$t1_unlocked) {
-            $msg = 'You need to unlock Tier 1 first.'; $msg_type = 'err';
+            $msg = 'Unlock Tier 1 first.'; $msg_type = 'err';
         } elseif (in_array($flag, $_SESSION['t1_submitted'], true)) {
             $msg = 'Already submitted. Keep going.'; $msg_type = 'warn';
         } else {
@@ -112,22 +107,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($remaining === 0) {
                 $_SESSION['t2_unlocked'] = true;
                 $t2_unlocked = true;
-                $msg      = '✔ All Tier 1 flags submitted. Tier 2 files are now unlocked!';
+                $msg = '✔ All Tier 1 flags submitted. Tier 2 files are now unlocked!';
                 $msg_type = 'ok';
             } else {
-                $msg      = "✔ Flag accepted. {$remaining} more Tier 1 flag(s) needed to unlock Tier 2.";
+                $msg = "✔ Flag accepted. {$remaining} more needed to unlock Tier 2.";
                 $msg_type = 'ok';
             }
         }
 
     } elseif (!empty($flag)) {
         if (preg_match('/^FLAG\{[^}]+\}$/', $flag)) {
-            if (in_array($flag, $ALL_REAL, true)) {
-                // Real flag but submitted to wrong place — give direction without spoiling
-                $msg = 'Valid flag — but this is not where you submit it. Keep digging.';
-            } else {
-                $msg = 'Not a valid flag. Keep digging.';
-            }
+            $msg = in_array($flag, $ALL_REAL, true)
+                ? 'Valid flag — but not submitted here. Keep digging.'
+                : 'Not a valid flag.';
             $msg_type = 'warn';
         } else {
             $msg = 'Invalid flag format.'; $msg_type = 'err';
@@ -145,13 +137,14 @@ $host     = htmlspecialchars(explode(':', $_SERVER['HTTP_HOST'])[0]);
 <head>
 <meta charset="utf-8">
 <title>NexusCorp — CTF</title>
+<!-- Internal recon note: asset inventory at /internal/admin_notes.md -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0e14;color:#c5d0e0;font-family:'Courier New',monospace;font-size:14px;padding:32px 20px}
-.wrap{max-width:920px;margin:0 auto}
+.wrap{max-width:960px;margin:0 auto}
 h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
 .sub{color:#556677;font-size:12px;margin-bottom:32px}
-.section{margin-bottom:28px}
+.section{margin-bottom:32px}
 .section h2{color:#8899aa;font-size:12px;letter-spacing:2px;text-transform:uppercase;
             border-bottom:1px solid #1e2a38;padding-bottom:6px;margin-bottom:14px;
             display:flex;align-items:center;gap:10px}
@@ -166,13 +159,18 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
 .btn{padding:9px 18px;border-radius:3px;font-family:inherit;font-size:13px;
      cursor:pointer;border:1px solid #1e6b42;background:#0d2b1e;color:#4caf88}
 .btn:hover{background:#0d3b26}
-.challenge-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
 .card{background:#0d1520;border:1px solid #1e2a38;border-radius:3px;padding:14px}
+.card.honey{border-color:#2a1a00}
 .card h3{font-size:13px;color:#cdd8e8;margin-bottom:6px}
+.card.honey h3{color:#8a7040}
 .card p{font-size:12px;color:#7a8fa0;line-height:1.5;margin-bottom:10px}
+.card.honey p{color:#5a4a30}
 .card a{display:inline-block;padding:5px 12px;border-radius:3px;font-size:12px;
         border:1px solid #1e5090;background:#0d2240;color:#5eb8ff;text-decoration:none}
+.card.honey a{border-color:#3a2a00;background:#1a1000;color:#8a7040}
 .card a:hover{background:#0d3260}
+.card.honey a:hover{background:#2a1a00}
 .lock-box{background:#1a0d0d;border:1px solid #3d1a1a;border-radius:3px;
           padding:18px;text-align:center;color:#8899aa;font-size:13px}
 .lock-box strong{color:#cf6679;display:block;font-size:15px;margin-bottom:6px}
@@ -182,7 +180,6 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
 .file-item span{font-size:12px;color:#8899aa}
 .file-item a{padding:4px 10px;border-radius:3px;font-size:12px;border:1px solid #1e6b42;
              background:#0d2b1e;color:#4caf88;text-decoration:none}
-.file-item a:hover{background:#0d3b26}
 .badge{font-size:11px;padding:2px 8px;border-radius:2px}
 .badge-ok  {background:#0d2b1e;border:1px solid #1e6b42;color:#4caf88}
 .badge-lock{background:#1a0d0d;border:1px solid #3d1a1a;color:#cf6679}
@@ -192,6 +189,14 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
 .prog{background:#1e2a38;border-radius:3px;height:6px}
 .prog-fill{height:100%;border-radius:3px;background:#4caf88;transition:.4s}
 .note{font-size:11px;color:#556677;margin-top:10px}
+.asset-table{width:100%;border-collapse:collapse;font-size:12px}
+.asset-table td{padding:7px 10px;border-bottom:1px solid #0d1520;color:#7a8fa0}
+.asset-table td:first-child{color:#5eb8ff;width:220px}
+.asset-table tr:hover td{background:#0d1520}
+.asset-table a{color:#5eb8ff;text-decoration:none}
+.asset-table a:hover{text-decoration:underline}
+.tag{font-size:10px;padding:1px 6px;border-radius:2px;margin-left:6px}
+.tag-warn{background:#2b230d;border:1px solid #4d3d00;color:#cfaa46}
 </style>
 </head>
 <body>
@@ -204,7 +209,7 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
   <div class="msg <?= $msg_type ?>"><?= htmlspecialchars($msg) ?></div>
 <?php endif; ?>
 
-<!-- ── FLAG SUBMIT ─────────────────────────────────────────────────── -->
+<!-- ── FLAG SUBMIT ─────────────────────────────────────────────────────── -->
 <div class="section">
   <h2>Submit Flag</h2>
   <form method="POST" autocomplete="off">
@@ -213,42 +218,89 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
       <button class="btn" type="submit">Submit</button>
     </div>
   </form>
-  <p class="note">⚠ Fake flags are planted throughout the system. Submitting one will be logged.</p>
+  <p class="note">⚠ Fake flags are planted throughout the system. Submitting one will be logged and costs −50 pts.</p>
 </div>
 
-<!-- ── TIER 0 ──────────────────────────────────────────────────────── -->
+<!-- ── KNOWN ASSETS (honeypot bait + real recon finds) ───────────────────
+     WEB-01 is hidden in robots.txt (/secure-upload → :8001)
+     WEB-02 is hidden in .env (THUMB_SERVICE_URL → :8002)
+     Players must do recon to find them. Shown here are the publicly
+     visible assets — some real, most traps.
+-->
 <div class="section">
   <h2>
-    Tier 0 — External / Pre-Auth
-    <span class="badge <?= $t1_unlocked ? 'badge-ok' : 'badge-lock' ?>">
-      <?= $t1_unlocked ? 'CLEARED' : 'ACTIVE' ?>
-    </span>
+    Discovered Assets — Tier 0
+    <span class="badge <?= $t1_unlocked ? 'badge-ok' : 'badge-lock' ?>"><?= $t1_unlocked ? 'CLEARED' : 'ACTIVE' ?></span>
   </h2>
-  <div class="challenge-grid">
-    <div class="card">
-      <h3>WEB-01: Polyglot Upload</h3>
-      <p>A secure file upload portal. Not all extensions are blocked equally.</p>
-      <a href="http://<?= $host ?>:8001/" target="_blank">Open →</a>
-    </div>
-    <div class="card">
-      <h3>WEB-02: ImageTragick RCE</h3>
-      <p>A thumbnail generation service. Something about the image processor feels old.</p>
-      <a href="http://<?= $host ?>:8002/" target="_blank">Open →</a>
-    </div>
-    <div class="card">
-      <h3>WEB-03: JWT Secret Leak</h3>
-      <p>A corporate login portal. The authentication relies on a secret that isn't secret.</p>
-      <a href="http://<?= $host ?>:8003/" target="_blank">Open →</a>
-    </div>
-    <div class="card">
-      <h3>SIEM: LFI Log Viewer</h3>
-      <p>An internal monitoring panel. The log path parameter trusts the user too much.</p>
-      <a href="http://<?= $host ?>:8080/" target="_blank">Open →</a>
-    </div>
-  </div>
+  <table class="asset-table">
+    <tr>
+      <td>/robots.txt</td>
+      <td>Standard crawler policy file. Worth reading carefully.
+        <a href="/robots.txt" target="_blank">View →</a></td>
+    </tr>
+    <tr>
+      <td>/.env</td>
+      <td>Environment config accidentally left public. Credentials inside?
+        <a href="/.env" target="_blank">View →</a></td>
+    </tr>
+    <tr>
+      <td>/backup/backup_db.sql</td>
+      <td>SQL database backup. Someone forgot to lock this down.
+        <a href="/backup/backup_db.sql" target="_blank">View →</a></td>
+    </tr>
+    <tr>
+      <td>/config.php.bak</td>
+      <td>Backup of the PHP config. Hardcoded credentials?
+        <a href="/config.php.bak" target="_blank">View →</a></td>
+    </tr>
+    <tr>
+      <td>/internal/admin_notes.md</td>
+      <td>Internal admin notes. Not meant to be public.
+        <a href="/internal/admin_notes.md" target="_blank">View →</a></td>
+    </tr>
+  </table>
 </div>
 
-<!-- ── TIER 1 FILES ────────────────────────────────────────────────── -->
+<!-- ── TIER 0 VISIBLE CHALLENGES ──────────────────────────────────────── -->
+<div class="section">
+  <h2>Tier 0 — Challenges</h2>
+  <div class="grid">
+
+    <!-- REAL: WEB-03 (visible) -->
+    <div class="card">
+      <h3>CORP-PORTAL: JWT Auth</h3>
+      <p>NexusCorp employee portal. Login required. Maybe the authentication can be bypassed.</p>
+      <a href="http://<?= $host ?>:8003/" target="_blank">Open →</a>
+    </div>
+
+    <!-- REAL: SIEM (visible) -->
+    <div class="card">
+      <h3>SIEM: Log Viewer</h3>
+      <p>Internal monitoring panel. Log path is user-controlled.</p>
+      <a href="http://<?= $host ?>:8080/" target="_blank">Open →</a>
+    </div>
+
+    <!-- HONEYPOT: CRYPTO-02 Caesar (looks easy, flag costs -50) -->
+    <div class="card honey">
+      <h3>CRYPTO-02: Caesar Cipher <span class="tag tag-warn">easy?</span></h3>
+      <p>A simple ROT cipher. Looks straightforward. Decode the message and submit the flag.</p>
+      <a href="/files/crypto/crypto02_caesar.txt" target="_blank">Get File →</a>
+    </div>
+
+    <!-- HONEYPOT: CRYPTO-03 Hash Crack (looks easy, flag costs -50) -->
+    <div class="card honey">
+      <h3>CRYPTO-03: Hash Cracker <span class="tag tag-warn">easy?</span></h3>
+      <p>An MD5 hash. Crack it and submit. Common wordlists should work.</p>
+      <a href="/files/crypto/crypto03_hash.txt" target="_blank">Get File →</a>
+    </div>
+
+  </div>
+  <p class="note" style="margin-top:12px">
+    💡 Not all services are listed here. Standard recon applies — check common files, headers, and ports.
+  </p>
+</div>
+
+<!-- ── TIER 1 FILES ────────────────────────────────────────────────────── -->
 <div class="section">
   <h2>
     Tier 1 — Files
@@ -298,12 +350,12 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
   <?php else: ?>
     <div class="lock-box">
       <strong>🔒 LOCKED</strong>
-      Complete Tier 0 and submit its flag to unlock Tier 1 files.
+      Complete Tier 0 and submit the correct flag to unlock.
     </div>
   <?php endif; ?>
 </div>
 
-<!-- ── TIER 2 FILES ────────────────────────────────────────────────── -->
+<!-- ── TIER 2 FILES ────────────────────────────────────────────────────── -->
 <div class="section">
   <h2>
     Tier 2 — Files
@@ -340,10 +392,8 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
     <div class="lock-box">
       <strong>🔒 LOCKED</strong>
       <?php if ($t1_unlocked): ?>
-        Submit all <?= $t1_total ?> Tier 1 flags to unlock Tier 2 files.
-        <br><span style="font-size:11px;margin-top:5px;display:block;color:#445566">
-          <?= $t1_done ?>/<?= $t1_total ?> submitted
-        </span>
+        Submit all <?= $t1_total ?> Tier 1 flags to unlock.
+        <span style="font-size:11px;display:block;margin-top:5px;color:#445566"><?= $t1_done ?>/<?= $t1_total ?> submitted</span>
       <?php else: ?>
         Complete Tier 0 first.
       <?php endif; ?>

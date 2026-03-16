@@ -104,21 +104,36 @@ install_packages() {
 }
 
 # =============================================================================
-# STEP 2 — USERS
+# STEP 2 — USERS & GROUPS
 # =============================================================================
 create_users() {
-    banner "STEP 2: CREATING USERS"
+    banner "STEP 2: CREATING USERS & GROUPS"
 
+    # ── Create groups explicitly FIRST ────────────────────────────────
+    # Alpine's adduser -S creates the user but group registration can
+    # be unreliable for chown. Creating groups explicitly first fixes this.
+    for grp in web01 web02 web03 adminpanel ctf-net; do
+        if getent group "$grp" &>/dev/null; then
+            log "Group exists: $grp"
+        else
+            addgroup -S "$grp" 2>/dev/null \
+                && log "Created group: $grp" \
+                || warn "Failed to create group: $grp"
+        fi
+    done
+
+    # ── System users (no login, no home) ──────────────────────────────
     for user in web01 web02 web03 adminpanel; do
         if id "$user" &>/dev/null; then
             log "System user exists: $user"
         else
-            adduser -S -D -H -s /sbin/nologin "$user" 2>/dev/null \
+            adduser -S -D -H -s /sbin/nologin -G "$user" "$user" 2>/dev/null \
                 && log "Created system user: $user" \
                 || warn "Failed to create: $user"
         fi
     done
 
+    # ── Login users ───────────────────────────────────────────────────
     for user in analyst engineer; do
         if id "$user" &>/dev/null; then
             log "Login user exists: $user"
@@ -129,16 +144,22 @@ create_users() {
         fi
     done
 
-    id nginx &>/dev/null || adduser -S -D -H -s /sbin/nologin nginx
+    # Ensure nginx user exists (comes with nginx package)
+    id nginx &>/dev/null || adduser -S -D -H -s /sbin/nologin nginx 2>/dev/null || true
 
-    # ── FIX: nginx must be in each web group to access FPM sockets ────
-    for webuser in web01 web02 web03; do
-        adduser nginx "$webuser" 2>/dev/null \
-            && log "Added nginx to group: $webuser" \
-            || warn "Could not add nginx to $webuser group"
+    # ── Add nginx to web groups so it can access FPM sockets ──────────
+    # Use addgroup (not adduser) — more reliable on Alpine for supplementary groups
+    for webgrp in web01 web02 web03; do
+        addgroup nginx "$webgrp" 2>/dev/null \
+            && log "Added nginx to group: $webgrp" \
+            || warn "nginx already in $webgrp or group missing"
     done
 
-    log "User creation complete"
+    # ── Add analyst/engineer to ctf-net (for nc/socat in challenges) ──
+    addgroup analyst  ctf-net 2>/dev/null || true
+    addgroup engineer ctf-net 2>/dev/null || true
+
+    log "User/group creation complete"
 }
 
 # =============================================================================
@@ -939,23 +960,14 @@ EOF
     fi
 
     # ── 13e: Restrict reverse-shell binaries (web users only) ─────────
-    # nc/ncat/socat are restricted to the ctf-net group only.
-    # analyst and engineer are added to ctf-net so they can use
-    # these tools for T3-Network challenges and binary shell callbacks.
-    # Web service accounts (web01/02/03) cannot use them.
+    # nc/ncat/socat restricted to ctf-net group.
+    # analyst and engineer are in ctf-net (added in Step 2).
+    # Web service accounts cannot use them.
     info "Restricting nc/socat to ctf-net group..."
-
-    # Create ctf-net group
-    addgroup ctf-net 2>/dev/null || true
-    adduser analyst  ctf-net 2>/dev/null || true
-    adduser engineer ctf-net 2>/dev/null || true
-    log "ctf-net group created — analyst and engineer are members"
-
     for bin in nc ncat netcat socat; do
         BIN_PATH=$(which "$bin" 2>/dev/null) || true
         if [ -n "$BIN_PATH" ] && [ -f "$BIN_PATH" ]; then
-            chown root:ctf-net "$BIN_PATH"
-            chmod 750 "$BIN_PATH"
+            chown root:ctf-net "$BIN_PATH" 2>/dev/null && chmod 750 "$BIN_PATH" 2>/dev/null
             log "Restricted to ctf-net group: $BIN_PATH"
         fi
     done
@@ -998,8 +1010,8 @@ logpath  = /var/log/auth.log
 maxretry = 15
 bantime  = 600
 EOF
-        rc-service fail2ban start  >> "$LOG" 2>&1
-        rc-update add fail2ban default >> "$LOG" 2>&1
+        rc-service fail2ban start  >> "$LOG" 2>&1 || true
+        rc-update add fail2ban default >> "$LOG" 2>&1 || true
         log "fail2ban started (SSH jail only)"
     else
         warn "fail2ban not installed — skipping"
@@ -1030,8 +1042,8 @@ EOF
 -w /home/analyst/.ssh/ -p rwxa -k ssh_keys
 -w /home/engineer/.ssh/ -p rwxa -k ssh_keys
 EOF
-        rc-service auditd start  >> "$LOG" 2>&1
-        rc-update add auditd default >> "$LOG" 2>&1
+        rc-service auditd start  >> "$LOG" 2>&1 || true
+        rc-update add auditd default >> "$LOG" 2>&1 || true
         log "auditd started with CTF rules"
     else
         warn "auditd not available — skipping"

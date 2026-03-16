@@ -1,99 +1,144 @@
 <?php
-// ── NexusCorp CTF Flag Gate ───────────────────────────────────────────────
-// T0 → T1: submit WEB-03 flag
-// T1 → T2: submit ALL 7 T1 flags
-// Session cookie only — no registration needed.
-
 session_start();
 
-// ── T0: Only WEB-03 unlocks T1 ───────────────────────────────────────────
+// ── T0: WEB-03 flag unlocks T1 ───────────────────────────────────────────
 define('T0_UNLOCK_FLAG', 'FLAG{web_03_jwt_secret_leak_q2w8}');
 
-// ── T1: ALL of these must be submitted to unlock T2 ──────────────────────
+// ── T1: ALL must be submitted to unlock T2 ───────────────────────────────
 $T1_FLAGS = [
-    'FLAG{t1_st3g0_lsb_r3d_ch4nn3l_x9p2}',
-    'FLAG{t1_w4v_sp3ctr0gr4m_m0rs3_k2n7}',
-    'FLAG{t1_m3m_dump_str1ngs_4n4lys1s_w3r}',
-    'FLAG{t1_d1sk_c4rv3_d3l3t3d_r3c0v3r_p5q}',
-    'FLAG{t1_x0r_k3y_r3p34t_br0k3n_m9x3}',
-    'FLAG{t1_v1g3n3r3_k3y_1n_c1ph3r_y7w2}',
+    'FLAG{t1_steg0_lsb_pixel_hunter_x7k}',
+    'FLAG{t1_dtmf_audio_decode_p3q}',
+    'FLAG{t1_mem_dump_analyst_r4m}',
+    'FLAG{t1_deleted_but_not_gone_77j}',
+    'FLAG{t1_xor_key_is_the_way_m2n}',
+    'FLAG{t1_vigenere_cracked_4you}',
+    'FLAG{t1_cr0n_h1dden_sch3dul3r}',
+    'FLAG{t1_ex1f_metadata_l34k}',
     'FLAG{t1_su1d_find_privesc_9z2}',
 ];
 
-// ── Honeypots ─────────────────────────────────────────────────────────────
+// ── All honeypot flags (27 total — logged on submission) ──────────────────
 $HONEYPOTS = [
+    // T0
+    'FLAG{t0_robots_txt_trap_n1c3}',
+    'FLAG{t0_dotenv_exposed_g0tcha}',
+    'FLAG{t0_sql_dump_fake_fl4g}',
+    'FLAG{t0_admin_notes_d3coy}',
+    'FLAG{t0_config_bak_tr4p}',
+    'FLAG{too_easy_try_harder}',
+    'FLAG{nice_try_keep_looking}',
+    // T1
+    'FLAG{t1_backup_found_nope}',
+    'FLAG{t1_creds_too_obvious}',
+    'FLAG{t1_pem_not_real_key}',
+    'FLAG{t1_rsa_small_e_gotcha}',
+    'FLAG{t1_log_grep_too_easy}',
     'FLAG{t1_sudo_trap_gotcha}',
-    'FLAG{crypto_fake_rsa_small_e_h4x0r}',
-    'FLAG{t1_fake_creds_trap_7x2k}',
-    'FLAG{t3_fake_kernel_exploit_n0p3}',
+    // T2
+    'FLAG{t2_eng_pass_tr4p}',
+    'FLAG{t2_s3cret_key_f4ke}',
+    'FLAG{t2_db_backup_n0pe}',
+    'FLAG{t2_ssh_key_l0l}',
+    'FLAG{t2_config_d3c0y}',
+    'FLAG{t2_h1story_tr4p}',
+    'FLAG{t2_n0tes_g0tcha}',
+    // T3
+    'FLAG{t3_hp_ssh_key_h1dd3n_m4k}',
+    'FLAG{t3_hp_l0gs_gr3p_f00l}',
+    'FLAG{t3_hp_db_dump_j4g}',
+    'FLAG{t3_hp_zip_cr4ck_d0y}',
+    'FLAG{t3_hp_h1dd3n_txt_p2s}',
+    // T4
+    'FLAG{t4_hp_ssh_z1p_f4k3_c9k}',
+    'FLAG{t4_hp_b4sh_h1st_curl_x2a}',
 ];
+
+// ── All real flags (for "flag recognised" feedback) ───────────────────────
+$ALL_REAL = array_merge([$T0_UNLOCK_FLAG], $T1_FLAGS, [
+    'FLAG{web_01_polyglot_upload_bypass_k8m3}',
+    'FLAG{web_02_imagetragick_rce_p9n7}',
+    'FLAG{crypto_01_multi_layer_decrypt_n9k4}',
+    'FLAG{t2_c4p_d4c_r34d_4bus3_x7k}',
+    'FLAG{t2_bash_history_aes_d3crypt3d_k7x}',
+    'FLAG{t2_mysql_dump_3xtr4ct_j9w}',
+    'FLAG{t2_j0urn4l_b1n4ry_p4rs3_m2v}',
+    'FLAG{t2_dm3sg_k3rn3l_fr4g_p8n}',
+    'FLAG{t2_r3v3rs3_v4l1d4t0r_q5z}',
+    'FLAG{t2_ssh_k3y_4ss3mbl3d_e2r}',
+    'FLAG{t3_fmt_str_0v3rwr1t3_y5v}',
+    'FLAG{t3_h34p_tc4ch3_p01s0n1ng_n9k4}',
+    'FLAG{t3_10g_4n4ly515_4n0m4ly_x7k}',
+    'FLAG{t3_p0rt_kn0ck1ng_s3qu3nc3_v2b}',
+    'FLAG{t3_k3rn3l_m0dul3_10ctl_pwn_b8w}',
+    'FLAG{t4_f1n4l_r00t_d3crypt10n_m4st3r}',
+    'FLAG{RWT_CTF_M4ST3RM1ND_C0MPL3T3_9X2}',
+]);
 
 // ── Session state ─────────────────────────────────────────────────────────
 if (!isset($_SESSION['t1_submitted'])) $_SESSION['t1_submitted'] = [];
 $t1_unlocked = !empty($_SESSION['t1_unlocked']);
 $t2_unlocked = !empty($_SESSION['t2_unlocked']);
-
-$msg      = '';
-$msg_type = '';
+$msg = ''; $msg_type = '';
 
 // ── Handle submission ─────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $flag = trim($_POST['flag'] ?? '');
 
     if (in_array($flag, $HONEYPOTS, true)) {
-        $msg      = '⚠ HONEYPOT DETECTED. That flag is fake. Someone is watching you.';
+        $msg      = '⚠ HONEYPOT DETECTED. That flag is fake. This has been logged.';
         $msg_type = 'warn';
         @file_put_contents('/var/log/redteam/honeypot.log',
             date('Y-m-d H:i:s') . ' HONEYPOT: ' . $flag .
             ' from ' . ($_SERVER['REMOTE_ADDR'] ?? '?') . "\n", FILE_APPEND);
 
-    } elseif ($flag === T0_UNLOCK_FLAG && !$t1_unlocked) {
-        $_SESSION['t1_unlocked'] = true;
-        $t1_unlocked = true;
-        $msg      = '✔ WEB-03 flag accepted. TIER 1 files are now unlocked.';
-        $msg_type = 'ok';
-
-    } elseif ($flag === T0_UNLOCK_FLAG && $t1_unlocked) {
-        $msg      = 'Already unlocked Tier 1.';
-        $msg_type = 'warn';
+    } elseif ($flag === T0_UNLOCK_FLAG) {
+        if (!$t1_unlocked) {
+            $_SESSION['t1_unlocked'] = true;
+            $t1_unlocked = true;
+            $msg      = '✔ Flag accepted. Tier 1 files are now unlocked.';
+            $msg_type = 'ok';
+        } else {
+            $msg = 'Tier 1 already unlocked.'; $msg_type = 'warn';
+        }
 
     } elseif (in_array($flag, $T1_FLAGS, true)) {
         if (!$t1_unlocked) {
-            $msg      = 'Complete T0 first — submit the WEB-03 flag to unlock Tier 1.';
-            $msg_type = 'err';
+            $msg = 'You need to unlock Tier 1 first.'; $msg_type = 'err';
         } elseif (in_array($flag, $_SESSION['t1_submitted'], true)) {
-            $msg      = 'Already submitted that one. Keep going.';
-            $msg_type = 'warn';
+            $msg = 'Already submitted. Keep going.'; $msg_type = 'warn';
         } else {
             $_SESSION['t1_submitted'][] = $flag;
             $remaining = count($T1_FLAGS) - count($_SESSION['t1_submitted']);
-
-            // Check if all T1 flags submitted
-            if (count($_SESSION['t1_submitted']) >= count($T1_FLAGS)) {
+            if ($remaining === 0) {
                 $_SESSION['t2_unlocked'] = true;
                 $t2_unlocked = true;
-                $msg      = '✔ All Tier 1 flags submitted. TIER 2 files are now unlocked!';
+                $msg      = '✔ All Tier 1 flags submitted. Tier 2 files are now unlocked!';
                 $msg_type = 'ok';
             } else {
-                $msg      = "✔ T1 flag accepted. {$remaining} more T1 flag(s) needed to unlock Tier 2.";
+                $msg      = "✔ Flag accepted. {$remaining} more Tier 1 flag(s) needed to unlock Tier 2.";
                 $msg_type = 'ok';
             }
         }
 
     } elseif (!empty($flag)) {
         if (preg_match('/^FLAG\{[^}]+\}$/', $flag)) {
-            $msg      = 'Flag format recognised but not accepted here. Check you are submitting the right flag.';
+            if (in_array($flag, $ALL_REAL, true)) {
+                // Real flag but submitted to wrong place — give direction without spoiling
+                $msg = 'Valid flag — but this is not where you submit it. Keep digging.';
+            } else {
+                $msg = 'Not a valid flag. Keep digging.';
+            }
             $msg_type = 'warn';
         } else {
-            $msg      = 'Invalid flag format.';
-            $msg_type = 'err';
+            $msg = 'Invalid flag format.'; $msg_type = 'err';
         }
     }
 }
 
-$t1_progress  = count($_SESSION['t1_submitted']);
-$t1_total     = count($T1_FLAGS);
-$t1_pct       = $t1_total ? (int)($t1_progress / $t1_total * 100) : 0;
+$t1_done  = count($_SESSION['t1_submitted']);
+$t1_total = count($T1_FLAGS);
+$t1_pct   = $t1_total ? (int)($t1_done / $t1_total * 100) : 0;
+$host     = htmlspecialchars(explode(':', $_SERVER['HTTP_HOST'])[0]);
 ?>
 <!DOCTYPE html>
 <html>
@@ -103,7 +148,7 @@ $t1_pct       = $t1_total ? (int)($t1_progress / $t1_total * 100) : 0;
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0e14;color:#c5d0e0;font-family:'Courier New',monospace;font-size:14px;padding:32px 20px}
-.wrap{max-width:900px;margin:0 auto}
+.wrap{max-width:920px;margin:0 auto}
 h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
 .sub{color:#556677;font-size:12px;margin-bottom:32px}
 .section{margin-bottom:28px}
@@ -114,10 +159,9 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
 .ok  {background:#0d2b1e;border:1px solid #1e6b42;color:#4caf88}
 .err {background:#2b0d0d;border:1px solid #6b1e1e;color:#cf6679}
 .warn{background:#2b230d;border:1px solid #6b551e;color:#cfaa46}
-.submit-row{display:flex;gap:8px;align-items:center}
-.submit-row input{flex:1;background:#0d1520;border:1px solid #2e3e52;
-                  color:#c5d0e0;padding:9px 12px;border-radius:3px;
-                  font-family:inherit;font-size:13px;max-width:480px}
+.submit-row{display:flex;gap:8px}
+.submit-row input{flex:1;background:#0d1520;border:1px solid #2e3e52;color:#c5d0e0;
+                  padding:9px 12px;border-radius:3px;font-family:inherit;font-size:13px;max-width:480px}
 .submit-row input:focus{outline:none;border-color:#5eb8ff}
 .btn{padding:9px 18px;border-radius:3px;font-family:inherit;font-size:13px;
      cursor:pointer;border:1px solid #1e6b42;background:#0d2b1e;color:#4caf88}
@@ -139,195 +183,173 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
 .file-item a{padding:4px 10px;border-radius:3px;font-size:12px;border:1px solid #1e6b42;
              background:#0d2b1e;color:#4caf88;text-decoration:none}
 .file-item a:hover{background:#0d3b26}
-.badge{font-size:11px;padding:2px 8px;border-radius:2px;font-weight:bold}
+.badge{font-size:11px;padding:2px 8px;border-radius:2px}
 .badge-ok  {background:#0d2b1e;border:1px solid #1e6b42;color:#4caf88}
 .badge-lock{background:#1a0d0d;border:1px solid #3d1a1a;color:#cf6679}
 .badge-part{background:#1a1500;border:1px solid #4d3d00;color:#cfaa46}
-.progress-wrap{margin:10px 0 14px}
-.progress-label{font-size:11px;color:#556677;margin-bottom:4px}
-.progress{background:#1e2a38;border-radius:3px;height:6px}
-.progress-fill{height:100%;border-radius:3px;background:#4caf88;transition:.4s}
-.honeypot-note{font-size:11px;color:#556677;margin-top:10px}
+.prog-wrap{margin:0 0 14px}
+.prog-label{font-size:11px;color:#556677;margin-bottom:4px}
+.prog{background:#1e2a38;border-radius:3px;height:6px}
+.prog-fill{height:100%;border-radius:3px;background:#4caf88;transition:.4s}
+.note{font-size:11px;color:#556677;margin-top:10px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <h1>[ NexusCorp RedTeam CTF ]</h1>
-  <p class="sub">Compromise the infrastructure. Capture the flags.</p>
+<h1>[ NexusCorp RedTeam CTF ]</h1>
+<p class="sub">Compromise the infrastructure. Capture the flags.</p>
 
-  <?php if ($msg): ?>
-    <div class="msg <?= $msg_type ?>"><?= htmlspecialchars($msg) ?></div>
-  <?php endif; ?>
+<?php if ($msg): ?>
+  <div class="msg <?= $msg_type ?>"><?= htmlspecialchars($msg) ?></div>
+<?php endif; ?>
 
-  <!-- ── FLAG SUBMIT ──────────────────────────────────────────────── -->
-  <div class="section">
-    <h2>Submit Flag</h2>
-    <form method="POST" autocomplete="off">
-      <div class="submit-row">
-        <input type="text" name="flag" placeholder="FLAG{...}" spellcheck="false" autofocus>
-        <button class="btn" type="submit">Submit</button>
-      </div>
-    </form>
-    <p class="honeypot-note">⚠ Fake flags are scattered everywhere. Submitting one will be logged.</p>
-  </div>
-
-  <!-- ── T0 CHALLENGES ─────────────────────────────────────────────── -->
-  <div class="section">
-    <h2>
-      Tier 0 — External / Pre-Auth
-      <?php if ($t1_unlocked): ?>
-        <span class="badge badge-ok">CLEARED</span>
-      <?php else: ?>
-        <span class="badge badge-lock">ACTIVE</span>
-      <?php endif; ?>
-    </h2>
-    <div class="challenge-grid">
-      <div class="card">
-        <h3>WEB-01: Polyglot Upload</h3>
-        <p>A file upload portal that checks extensions. Find the gap. Get a shell.</p>
-        <a href="http://<?= htmlspecialchars(explode(':', $_SERVER['HTTP_HOST'])[0]) ?>:8001/" target="_blank">Open Challenge →</a>
-      </div>
-      <div class="card">
-        <h3>WEB-02: ImageTragick RCE</h3>
-        <p>A thumbnail generator. Something old lurks in the image processor.</p>
-        <a href="http://<?= htmlspecialchars(explode(':', $_SERVER['HTTP_HOST'])[0]) ?>:8002/" target="_blank">Open Challenge →</a>
-      </div>
-      <div class="card">
-        <h3>WEB-03: JWT Secret Leak</h3>
-        <p>A corporate login portal. Secrets hide in plain JavaScript.</p>
-        <a href="http://<?= htmlspecialchars(explode(':', $_SERVER['HTTP_HOST'])[0]) ?>:8003/" target="_blank">Open Challenge →</a>
-      </div>
-      <div class="card">
-        <h3>SIEM: LFI Log Viewer</h3>
-        <p>Internal monitoring panel. The log viewer trusts user input too much.</p>
-        <a href="http://<?= htmlspecialchars(explode(':', $_SERVER['HTTP_HOST'])[0]) ?>:8080/" target="_blank">Open Challenge →</a>
-      </div>
+<!-- ── FLAG SUBMIT ─────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>Submit Flag</h2>
+  <form method="POST" autocomplete="off">
+    <div class="submit-row">
+      <input type="text" name="flag" placeholder="FLAG{...}" spellcheck="false" autofocus>
+      <button class="btn" type="submit">Submit</button>
     </div>
-    <?php if (!$t1_unlocked): ?>
-      <div class="lock-box" style="margin-top:12px">
-        <strong>🔒 T1 LOCKED</strong>
-        Complete WEB-03 and submit its flag above to unlock Tier 1 files.
-        <br><span style="font-size:11px;margin-top:6px;display:block;color:#445566">Chain: WEB-01 → WEB-02 → WEB-03 → submit flag</span>
-      </div>
-    <?php endif; ?>
+  </form>
+  <p class="note">⚠ Fake flags are planted throughout the system. Submitting one will be logged.</p>
+</div>
+
+<!-- ── TIER 0 ──────────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>
+    Tier 0 — External / Pre-Auth
+    <span class="badge <?= $t1_unlocked ? 'badge-ok' : 'badge-lock' ?>">
+      <?= $t1_unlocked ? 'CLEARED' : 'ACTIVE' ?>
+    </span>
+  </h2>
+  <div class="challenge-grid">
+    <div class="card">
+      <h3>WEB-01: Polyglot Upload</h3>
+      <p>A secure file upload portal. Not all extensions are blocked equally.</p>
+      <a href="http://<?= $host ?>:8001/" target="_blank">Open →</a>
+    </div>
+    <div class="card">
+      <h3>WEB-02: ImageTragick RCE</h3>
+      <p>A thumbnail generation service. Something about the image processor feels old.</p>
+      <a href="http://<?= $host ?>:8002/" target="_blank">Open →</a>
+    </div>
+    <div class="card">
+      <h3>WEB-03: JWT Secret Leak</h3>
+      <p>A corporate login portal. The authentication relies on a secret that isn't secret.</p>
+      <a href="http://<?= $host ?>:8003/" target="_blank">Open →</a>
+    </div>
+    <div class="card">
+      <h3>SIEM: LFI Log Viewer</h3>
+      <p>An internal monitoring panel. The log path parameter trusts the user too much.</p>
+      <a href="http://<?= $host ?>:8080/" target="_blank">Open →</a>
+    </div>
   </div>
+</div>
 
-  <!-- ── T1 FILES ──────────────────────────────────────────────────── -->
-  <div class="section">
-    <h2>
-      Tier 1 — Files
-      <?php if ($t2_unlocked): ?>
-        <span class="badge badge-ok">CLEARED</span>
-      <?php elseif ($t1_unlocked): ?>
-        <span class="badge badge-part"><?= $t1_progress ?>/<?= $t1_total ?> FLAGS</span>
-      <?php else: ?>
-        <span class="badge badge-lock">LOCKED</span>
-      <?php endif; ?>
-    </h2>
-
-    <?php if ($t1_unlocked): ?>
-
-      <?php if (!$t2_unlocked): ?>
-        <div class="progress-wrap">
-          <div class="progress-label">T2 unlock progress: <?= $t1_progress ?>/<?= $t1_total ?> T1 flags submitted</div>
-          <div class="progress"><div class="progress-fill" style="width:<?= $t1_pct ?>%"></div></div>
-        </div>
-      <?php endif; ?>
-
-      <div class="file-grid">
-        <?php
-        $t1_files = [
-          ['STEGO-01: suspicious.png',       'stego/suspicious.png'],
-          ['STEGO-01: README',               'stego/stego01_README.txt'],
-          ['STEGO-02: transmission.wav',     'stego/transmission.wav'],
-          ['STEGO-02: hint.txt',             'stego/stego02_hint.txt'],
-          ['FORENSICS-01: memory.dmp',       'forensics/memory.dmp'],
-          ['FORENSICS-01: README',           'forensics/forensics01_README.txt'],
-          ['FORENSICS-02: disk.img',         'forensics/disk.img'],
-          ['FORENSICS-02: README',           'forensics/forensics02_README.txt'],
-          ['CRYPTO-04: xor_cipher.bin',      'crypto/xor_cipher.bin'],
-          ['CRYPTO-04: note.txt',            'crypto/note.txt'],
-          ['CRYPTO-04: README',              'crypto/crypto04_README.txt'],
-          ['CRYPTO-05: vigenere.txt',        'crypto/vigenere.txt'],
-          ['CRYPTO-05: README',              'crypto/crypto05_README.txt'],
-        ];
-        foreach ($t1_files as [$label, $path]):
-          $full = '/var/www/html/files/' . $path;
-        ?>
-          <div class="file-item">
-            <span><?= htmlspecialchars($label) ?></span>
-            <?php if (file_exists($full)): ?>
-              <a href="/files/<?= htmlspecialchars($path) ?>">Download</a>
-            <?php else: ?>
-              <span style="color:#3d4d5d;font-size:11px">pending</span>
-            <?php endif; ?>
-          </div>
-        <?php endforeach; ?>
-      </div>
-
-    <?php else: ?>
-      <div class="lock-box">
-        <strong>🔒 ACCESS DENIED</strong>
-        Complete WEB-03 and submit its flag to unlock Tier 1 files.
-        <br><span style="font-size:11px;margin-top:6px;display:block;color:#445566">
-          Hint: WEB-01 → WEB-02 → WEB-03 → submit here
-        </span>
-      </div>
-    <?php endif; ?>
-  </div>
-
-  <!-- ── T2 FILES ──────────────────────────────────────────────────── -->
-  <div class="section">
-    <h2>
-      Tier 2 — Files
-      <?php if ($t2_unlocked): ?>
-        <span class="badge badge-ok">UNLOCKED</span>
-      <?php elseif ($t1_unlocked): ?>
-        <span class="badge badge-part">SUBMIT ALL T1 FLAGS TO UNLOCK</span>
-      <?php else: ?>
-        <span class="badge badge-lock">LOCKED</span>
-      <?php endif; ?>
-    </h2>
-
+<!-- ── TIER 1 FILES ────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>
+    Tier 1 — Files
     <?php if ($t2_unlocked): ?>
-      <div class="file-grid">
-        <?php
-        $t2_files = [
-          ['CRYPTO-06: encrypted bash history', 'crypto/encrypted_bash_history.enc'],
-          ['CRYPTO-06: analyst note',           'crypto/analyst_note.txt'],
-          ['FORENSICS-03: analyst_db.sql',      'forensics/analyst_db.sql'],
-          ['FORENSICS-05: dmesg.log',           'forensics/dmesg.log'],
-          ['REVERSE-01: license_validator.py',  'misc/license_validator.py'],
-        ];
-        foreach ($t2_files as [$label, $path]):
-          $full = '/var/www/html/files/' . $path;
-        ?>
-          <div class="file-item">
-            <span><?= htmlspecialchars($label) ?></span>
-            <?php if (file_exists($full)): ?>
-              <a href="/files/<?= htmlspecialchars($path) ?>">Download</a>
-            <?php else: ?>
-              <span style="color:#3d4d5d;font-size:11px">pending</span>
-            <?php endif; ?>
-          </div>
-        <?php endforeach; ?>
-      </div>
-
+      <span class="badge badge-ok">CLEARED</span>
+    <?php elseif ($t1_unlocked): ?>
+      <span class="badge badge-part"><?= $t1_done ?>/<?= $t1_total ?> FLAGS</span>
     <?php else: ?>
-      <div class="lock-box">
-        <strong>🔒 LOCKED</strong>
-        <?php if ($t1_unlocked): ?>
-          Submit all <?= $t1_total ?> Tier 1 flags to unlock Tier 2 files.
-          <br><span style="font-size:11px;margin-top:6px;display:block;color:#445566">
-            <?= $t1_progress ?>/<?= $t1_total ?> submitted so far
-          </span>
-        <?php else: ?>
-          Complete Tier 0 first.
-        <?php endif; ?>
+      <span class="badge badge-lock">LOCKED</span>
+    <?php endif; ?>
+  </h2>
+
+  <?php if ($t1_unlocked): ?>
+    <?php if (!$t2_unlocked): ?>
+      <div class="prog-wrap">
+        <div class="prog-label">Tier 2 unlock: <?= $t1_done ?>/<?= $t1_total ?> Tier 1 flags submitted</div>
+        <div class="prog"><div class="prog-fill" style="width:<?= $t1_pct ?>%"></div></div>
       </div>
     <?php endif; ?>
-  </div>
+    <div class="file-grid">
+      <?php foreach ([
+        ['STEGO-01: suspicious.png',   'stego/suspicious.png'],
+        ['STEGO-01: README',           'stego/stego01_README.txt'],
+        ['STEGO-02: transmission.wav', 'stego/transmission.wav'],
+        ['STEGO-02: hint.txt',         'stego/stego02_hint.txt'],
+        ['FORENSICS-01: memory.dmp',   'forensics/memory.dmp'],
+        ['FORENSICS-01: README',       'forensics/forensics01_README.txt'],
+        ['FORENSICS-02: disk.img',     'forensics/disk.img'],
+        ['FORENSICS-02: README',       'forensics/forensics02_README.txt'],
+        ['CRYPTO-04: xor_cipher.bin',  'crypto/xor_cipher.bin'],
+        ['CRYPTO-04: note.txt',        'crypto/note.txt'],
+        ['CRYPTO-04: README',          'crypto/crypto04_README.txt'],
+        ['CRYPTO-05: vigenere.txt',    'crypto/vigenere.txt'],
+        ['CRYPTO-05: README',          'crypto/crypto05_README.txt'],
+      ] as [$label, $path]):
+        $exists = file_exists('/var/www/html/files/' . $path); ?>
+        <div class="file-item">
+          <span><?= htmlspecialchars($label) ?></span>
+          <?php if ($exists): ?>
+            <a href="/files/<?= htmlspecialchars($path) ?>">Download</a>
+          <?php else: ?>
+            <span style="color:#3d4d5d;font-size:11px">pending</span>
+          <?php endif; ?>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php else: ?>
+    <div class="lock-box">
+      <strong>🔒 LOCKED</strong>
+      Complete Tier 0 and submit its flag to unlock Tier 1 files.
+    </div>
+  <?php endif; ?>
+</div>
+
+<!-- ── TIER 2 FILES ────────────────────────────────────────────────── -->
+<div class="section">
+  <h2>
+    Tier 2 — Files
+    <?php if ($t2_unlocked): ?>
+      <span class="badge badge-ok">UNLOCKED</span>
+    <?php elseif ($t1_unlocked): ?>
+      <span class="badge badge-part">SUBMIT ALL T1 FLAGS TO UNLOCK</span>
+    <?php else: ?>
+      <span class="badge badge-lock">LOCKED</span>
+    <?php endif; ?>
+  </h2>
+
+  <?php if ($t2_unlocked): ?>
+    <div class="file-grid">
+      <?php foreach ([
+        ['CRYPTO-06: encrypted bash history', 'crypto/encrypted_bash_history.enc'],
+        ['CRYPTO-06: analyst note',           'crypto/analyst_note.txt'],
+        ['FORENSICS-03: analyst_db.sql',      'forensics/analyst_db.sql'],
+        ['FORENSICS-05: dmesg.log',           'forensics/dmesg.log'],
+        ['REVERSE-01: license_validator.py',  'misc/license_validator.py'],
+      ] as [$label, $path]):
+        $exists = file_exists('/var/www/html/files/' . $path); ?>
+        <div class="file-item">
+          <span><?= htmlspecialchars($label) ?></span>
+          <?php if ($exists): ?>
+            <a href="/files/<?= htmlspecialchars($path) ?>">Download</a>
+          <?php else: ?>
+            <span style="color:#3d4d5d;font-size:11px">pending</span>
+          <?php endif; ?>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  <?php else: ?>
+    <div class="lock-box">
+      <strong>🔒 LOCKED</strong>
+      <?php if ($t1_unlocked): ?>
+        Submit all <?= $t1_total ?> Tier 1 flags to unlock Tier 2 files.
+        <br><span style="font-size:11px;margin-top:5px;display:block;color:#445566">
+          <?= $t1_done ?>/<?= $t1_total ?> submitted
+        </span>
+      <?php else: ?>
+        Complete Tier 0 first.
+      <?php endif; ?>
+    </div>
+  <?php endif; ?>
+</div>
 
 </div>
 </body>

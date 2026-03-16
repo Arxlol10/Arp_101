@@ -347,7 +347,7 @@ setup_nginx() {
 
     rm -f /etc/nginx/http.d/default.conf
 
-    # Port 80 — index.php with flag gate, /files/ blocked unless session unlocked
+    # Port 80 — CTF index + flag gate + hidden challenge redirects
     cat > /etc/nginx/http.d/main.conf << 'EOF'
 server {
     listen 80;
@@ -356,7 +356,16 @@ server {
     index index.php;
     server_tokens off;
 
-    # ── Internal auth check (never exposed directly) ──────────────────
+    # ── Hidden challenge redirects ─────────────────────────────────────
+    # WEB-01: discoverable via robots.txt Disallow: /secure-upload
+    location = /secure-upload      { return 301 http://$host:8001/; }
+    location ^~ /secure-upload/    { return 301 http://$host:8001/; }
+
+    # WEB-02: discoverable via .env THUMB_SERVICE_URL
+    location = /thumb-service      { return 301 http://$host:8002/; }
+    location ^~ /thumb-service/    { return 301 http://$host:8002/; }
+
+    # ── Auth check (internal only) ─────────────────────────────────────
     location = /auth_check {
         internal;
         fastcgi_pass unix:/var/run/php83-fpm-main.sock;
@@ -365,19 +374,16 @@ server {
         include fastcgi_params;
     }
 
-    # ── /files/ — requires T0 flag to have been submitted ─────────────
+    # ── /files/ — session-gated ────────────────────────────────────────
     location /files/ {
         auth_request /auth_check;
-        # On auth failure redirect back to index with a hint
         error_page 403 = @locked;
         autoindex off;
     }
 
-    location @locked {
-        return 302 /?locked=1;
-    }
+    location @locked { return 302 /?locked=1; }
 
-    # ── T0 honeypots — always accessible (part of T0 recon) ───────────
+    # ── T0 honeypot assets — always public ────────────────────────────
     location /backup/   { autoindex on; }
     location /internal/ { autoindex on; }
     location = /robots.txt     {}
@@ -391,7 +397,6 @@ server {
         include fastcgi_params;
     }
 
-    # ── Everything else ───────────────────────────────────────────────
     location / {
         try_files $uri $uri/ /index.php?$query_string;
     }
@@ -519,6 +524,91 @@ deploy_challenges() {
     done
     cp "$CTF/T0-Honeypots/admin_notes.md" /var/www/html/internal/ 2>/dev/null || true
     cp "$CTF/T0-Honeypots/backup_db.sql"  /var/www/html/backup/   2>/dev/null || true
+
+    # ── Inject WEB-01 discovery hint into robots.txt ──────────────────
+    # Players who read robots.txt will find the disallowed path which
+    # hints at the hidden SecureShare upload portal on :8001
+    info "Injecting WEB-01 discovery hint into robots.txt..."
+    cat > /var/www/html/robots.txt << 'EOF'
+User-agent: *
+Disallow: /admin/
+Disallow: /internal/
+Disallow: /backup/
+Disallow: /secure-upload/
+Disallow: /files/
+
+# FLAG{t0_robots_txt_trap_n1c3}
+EOF
+    # Nginx rewrite: /secure-upload → :8001 (injected into main.conf after it's created)
+    log "WEB-01 hidden at /secure-upload → :8001 (hint in robots.txt)"
+
+    # ── Inject WEB-02 discovery hint into .env ────────────────────────
+    # Players who read .env will find THUMB_SERVICE_URL pointing to :8002
+    info "Injecting WEB-02 discovery hint into .env..."
+    cat > /var/www/html/.env << 'EOF'
+APP_ENV=production
+APP_DEBUG=false
+APP_KEY=base64:kN3xP2mQ8rT5vW1yZ4aB7cE0fG6hJ9lM
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=nexuscorp_prod
+DB_USERNAME=nexus_app
+DB_PASSWORD=Nx$ecur3P4ss2024!
+
+MAIL_DRIVER=smtp
+MAIL_HOST=mail.nexuscorp.internal
+MAIL_PORT=587
+
+# Internal microservices
+THUMB_SERVICE_URL=http://localhost:8002
+THUMB_SERVICE_KEY=th-svc-k3y-2024-int3rn4l
+AUTH_SERVICE_URL=http://localhost:8003
+LOG_SERVICE_URL=http://localhost:8080/api
+
+# FLAG{t0_dotenv_exposed_g0tcha}
+EOF
+    log "WEB-02 hidden at THUMB_SERVICE_URL → :8002 (hint in .env)"
+
+    # ── Create honeypot challenge files (CRYPTO-02 and CRYPTO-03) ─────
+    info "Creating honeypot challenge files (CRYPTO-02, CRYPTO-03)..."
+    mkdir -p /var/www/html/files/crypto
+
+    # CRYPTO-02: Caesar cipher — decodes to the honeypot flag string
+    # "FLAG{too_easy_try_harder}" ROT13 encoded
+    cat > /var/www/html/files/crypto/crypto02_caesar.txt << 'EOF'
+== NexusCorp Internal Comms - Intercepted Transmission ==
+Cipher: ROT (simple substitution)
+Hint: Try common rotation values
+
+SYNT{gbb_rnfl_gel_uneqre}
+
+-- Message ends --
+Note: This was found in an outbound packet capture from the DMZ.
+      Analyst believes it contains credentials or a key fragment.
+EOF
+
+    # CRYPTO-03: MD5 hash — hash of "FLAG{nice_try_keep_looking}"
+    # Pre-computed: echo -n "FLAG{nice_try_keep_looking}" | md5sum
+    HASH=$(echo -n "FLAG{nice_try_keep_looking}" | md5sum | awk '{print $1}' 2>/dev/null || echo "b3a4c2d1e5f6a7b8c9d0e1f2a3b4c5d6")
+    cat > /var/www/html/files/crypto/crypto03_hash.txt << EOF
+== NexusCorp Password Recovery Request ==
+System: Internal Auth Server
+Type: MD5 (unsalted)
+Hash: ${HASH}
+
+Recovered from: /var/log/auth_debug.log
+Timestamp: 2024-11-14 03:22:17 UTC
+
+Note: This hash was found in a debug log accidentally left enabled
+      on the production auth server. The plaintext may be reused
+      across other systems.
+EOF
+
+    chmod 644 /var/www/html/files/crypto/crypto02_caesar.txt
+    chmod 644 /var/www/html/files/crypto/crypto03_hash.txt
+    log "Honeypot challenge files created (CRYPTO-02, CRYPTO-03)"
 
     # ── Deploy index.php flag gate ─────────────────────────────────────
     info "Deploying T0→T1 flag gate..."

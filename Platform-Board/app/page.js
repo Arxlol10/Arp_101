@@ -1,5 +1,6 @@
 import { sql } from '@vercel/postgres';
 import { initializeDatabase } from '@/lib/db';
+import ScoreGraph from './components/ScoreGraph';
 
 export const revalidate = 10; // ISR – refresh every 10s
 
@@ -22,13 +23,15 @@ async function getStats() {
     const teamsRes   = await sql`SELECT COUNT(*) as count FROM teams`;
     const subsRes    = await sql`SELECT COUNT(*) as count FROM submissions`;
     const challRes   = await sql`SELECT COUNT(*) as count FROM challenges`;
+    const hpRes      = await sql`SELECT COUNT(*) as count FROM challenges WHERE is_honeypot = true`;
     return {
       teams:       Number(teamsRes.rows[0].count),
       submissions: Number(subsRes.rows[0].count),
       challenges:  Number(challRes.rows[0].count),
+      honeypots:   Number(hpRes.rows[0].count),
     };
   } catch {
-    return { teams: 0, submissions: 0, challenges: 0 };
+    return { teams: 0, submissions: 0, challenges: 0, honeypots: 0 };
   }
 }
 
@@ -64,10 +67,21 @@ export default async function ScoreboardPage() {
           <div className="stat-card__label">Challenges</div>
         </div>
         <div className="stat-card">
-          <div className="stat-card__value">{stats.submissions}</div>
+          <div className="stat-card__value" style={{ color: 'var(--neon-red)' }}>{stats.honeypots}</div>
+          <div className="stat-card__label">🍯 Honeypots</div>
+        </div>
+        <div className="stat-card">
+          <div className="stat-card__value" style={{ color: 'var(--neon-blue)' }}>{stats.submissions}</div>
           <div className="stat-card__label">Total Submissions</div>
         </div>
       </div>
+
+      {/* Score Graph */}
+      {teams.length > 0 && (
+        <div className="card" style={{ marginBottom: '1.5rem' }}>
+          <ScoreGraph teams={teams} />
+        </div>
+      )}
 
       {/* Table */}
       {teams.length === 0 ? (
@@ -83,6 +97,7 @@ export default async function ScoreboardPage() {
               <tr>
                 <th>Rank</th>
                 <th>Team</th>
+                <th>Solves</th>
                 <th style={{ textAlign: 'right' }}>Score</th>
               </tr>
             </thead>
@@ -92,9 +107,11 @@ export default async function ScoreboardPage() {
                   <td>
                     <span className={getRankClass(i)}>{i + 1}</span>
                   </td>
-                  <td>{team.name}</td>
+                  <td style={{ fontWeight: i < 3 ? 600 : 400 }}>{team.name}</td>
+                  <td style={{ color: 'var(--text-muted)', fontSize: '.8rem' }}>—</td>
                   <td style={{ textAlign: 'right' }}>
-                    <span className={getScoreClass(team.score)}>
+                    <span className={getScoreClass(team.score)}
+                      style={{ fontSize: i < 3 ? '1.05rem' : '.88rem', fontWeight: i < 3 ? 700 : 400 }}>
                       {team.score > 0 ? `+${team.score}` : team.score}
                     </span>
                   </td>

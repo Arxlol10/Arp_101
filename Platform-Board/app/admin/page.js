@@ -64,6 +64,25 @@ export default function AdminPage() {
     }
   }
 
+  async function seedChallenges() {
+    if (!confirm('Seed all challenges from .env? This will add all T0-T4 challenges.')) return;
+    setStatus(null);
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/seed', { method: 'POST', headers });
+      const data = await res.json();
+      if (res.ok) {
+        setStatus({ type: 'success', message: data.message });
+        fetchData();
+      } else {
+        setStatus({ type: 'error', message: data.error || 'Seed failed.' });
+      }
+    } catch {
+      setStatus({ type: 'error', message: 'Network error.' });
+    }
+    setLoading(false);
+  }
+
   async function addChallenge(e) {
     e.preventDefault();
     setStatus(null);
@@ -134,6 +153,10 @@ export default function AdminPage() {
           onClick={() => setTab('challenges')}>Challenges ({challenges.length})</button>
         <button className={`btn ${tab === 'add-challenge' ? 'btn--primary' : 'btn--secondary'}`}
           onClick={() => setTab('add-challenge')}>+ Add Challenge</button>
+        <button className="btn btn--secondary" onClick={seedChallenges}
+          style={{ background: 'rgba(168,85,247,.1)', borderColor: 'rgba(168,85,247,.3)', color: '#a855f7' }}>
+          🌱 Seed All
+        </button>
         <button className="btn btn--secondary" onClick={fetchData}
           style={{ marginLeft: 'auto' }}>
           {loading ? '⟳ Loading…' : '⟳ Refresh'}

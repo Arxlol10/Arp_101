@@ -18,7 +18,6 @@ export default function RootLayout({ children }) {
             <li><a href="/" className="navbar__link">Scoreboard</a></li>
             <li><a href="/register" className="navbar__link">Register</a></li>
             <li><a href="/submit" className="navbar__link">Submit Flag</a></li>
-            <li><a href="/admin" className="navbar__link">Admin</a></li>
           </ul>
         </nav>
         {children}

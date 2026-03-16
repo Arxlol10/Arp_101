@@ -1,7 +1,6 @@
-import { sql } from '@vercel/postgres';
+import { sql, initializeDatabase } from '@/lib/db';
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
-import { initializeDatabase } from '@/lib/db';
 
 export async function POST(request) {
   try {

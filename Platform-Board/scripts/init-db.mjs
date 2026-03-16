@@ -1,4 +1,3 @@
-import { sql } from '@vercel/postgres';
 import { initializeDatabase } from '../lib/db.js';
 
 async function main() {

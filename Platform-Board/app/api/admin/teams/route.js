@@ -1,6 +1,5 @@
-import { sql } from '@vercel/postgres';
+import { sql, initializeDatabase } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import { initializeDatabase } from '@/lib/db';
 
 function checkAdmin(request) {
   const key = request.headers.get('x-admin-key');

@@ -1,5 +1,4 @@
-import { sql } from '@vercel/postgres';
-import { initializeDatabase } from '@/lib/db';
+import { sql, initializeDatabase } from '@/lib/db';
 import ScoreGraph from './components/ScoreGraph';
 
 export const revalidate = 10; // ISR – refresh every 10s

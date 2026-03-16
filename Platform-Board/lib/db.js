@@ -1,7 +1,26 @@
-import { sql } from '@vercel/postgres';
+import postgres from 'postgres';
+
+// Create a single connection instance using POSTGRES_URL
+const connectionString = process.env.POSTGRES_URL || process.env.DATABASE_URL;
+
+const pgSql = postgres(connectionString, {
+  ssl: 'require',
+  max: 5,
+  idle_timeout: 20,
+  connect_timeout: 10,
+});
+
+/**
+ * Tagged-template wrapper that mimics @vercel/postgres's sql`...` API.
+ * Returns { rows: [...], rowCount: N } so all existing route code works unchanged.
+ */
+export async function sql(strings, ...values) {
+  const rows = await pgSql(strings, ...values);
+  return { rows: Array.from(rows), rowCount: rows.length };
+}
 
 export async function initializeDatabase() {
-  await sql`
+  await pgSql`
     CREATE TABLE IF NOT EXISTS teams (
       id SERIAL PRIMARY KEY,
       name VARCHAR(100) UNIQUE NOT NULL,
@@ -11,7 +30,7 @@ export async function initializeDatabase() {
     );
   `;
 
-  await sql`
+  await pgSql`
     CREATE TABLE IF NOT EXISTS challenges (
       id SERIAL PRIMARY KEY,
       name VARCHAR(200) NOT NULL,
@@ -23,7 +42,7 @@ export async function initializeDatabase() {
     );
   `;
 
-  await sql`
+  await pgSql`
     CREATE TABLE IF NOT EXISTS submissions (
       id SERIAL PRIMARY KEY,
       team_id INTEGER REFERENCES teams(id) ON DELETE CASCADE,
@@ -35,11 +54,11 @@ export async function initializeDatabase() {
     );
   `;
 
-  await sql`
+  await pgSql`
     CREATE INDEX IF NOT EXISTS idx_submissions_team ON submissions(team_id);
   `;
 
-  await sql`
+  await pgSql`
     CREATE INDEX IF NOT EXISTS idx_submissions_challenge ON submissions(challenge_id);
   `;
 }

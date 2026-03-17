@@ -1,13 +1,14 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default function RegisterPage() {
+export default function LoginPage() {
   const [teamName, setTeamName] = useState('');
   const [password, setPassword] = useState('');
-  const [confirm, setConfirm]   = useState('');
   const [status, setStatus]     = useState(null);
   const [loading, setLoading]   = useState(false);
+  const router = useRouter();
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -17,33 +18,19 @@ export default function RegisterPage() {
       setStatus({ type: 'error', message: 'All fields are required.' });
       return;
     }
-    if (password !== confirm) {
-      setStatus({ type: 'error', message: 'Passwords do not match.' });
-      return;
-    }
-    if (password.length < 4) {
-      setStatus({ type: 'error', message: 'Password must be at least 4 characters.' });
-      return;
-    }
 
     setLoading(true);
     try {
-      const res = await fetch('/api/register', {
+      const res = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: teamName.trim(), password }),
       });
       const data = await res.json();
       if (res.ok) {
-        setStatus({
-          type: 'success',
-          message: `${data.message || 'Team registered!'} You can now log in.`,
-        });
-        setTeamName('');
-        setPassword('');
-        setConfirm('');
+        router.push('/challenges');
       } else {
-        setStatus({ type: 'error', message: data.error || 'Registration failed.' });
+        setStatus({ type: 'error', message: data.error || 'Login failed.' });
       }
     } catch {
       setStatus({ type: 'error', message: 'Network error. Try again.' });
@@ -54,51 +41,38 @@ export default function RegisterPage() {
 
   return (
     <main className="page">
-      <h1 className="page__title">🛡️ Team Registration</h1>
-      <p className="page__subtitle">// register your team to compete</p>
+      <h1 className="page__title">🔑 Team Login</h1>
+      <p className="page__subtitle">// sign in to submit flags and view challenges</p>
 
-      <div className="card" style={{ maxWidth: 480 }}>
+      <div className="card" style={{ maxWidth: 440 }}>
         {status && (
           <div className={`alert alert--${status.type}`}>
             {status.message}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} id="register-form">
+        <form onSubmit={handleSubmit} id="login-form">
           <div className="form-group">
-            <label className="form-label" htmlFor="team-name">Team Name</label>
+            <label className="form-label" htmlFor="login-team">Team Name</label>
             <input
-              id="team-name"
+              id="login-team"
               className="form-input"
               type="text"
-              placeholder="Enter team name"
+              placeholder="Enter your team name"
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
-              maxLength={100}
             />
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="password">Password</label>
+            <label className="form-label" htmlFor="login-password">Password</label>
             <input
-              id="password"
+              id="login-password"
               className="form-input"
               type="password"
-              placeholder="Choose a password"
+              placeholder="Your team password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="confirm-password">Confirm Password</label>
-            <input
-              id="confirm-password"
-              className="form-input"
-              type="password"
-              placeholder="Repeat password"
-              value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
             />
           </div>
 
@@ -108,9 +82,9 @@ export default function RegisterPage() {
             disabled={loading}
           >
             {loading ? (
-              <><span className="spinner" style={{ width: 16, height: 16 }}></span> Registering…</>
+              <><span className="spinner" style={{ width: 16, height: 16 }}></span> Signing in…</>
             ) : (
-              'Register Team →'
+              'Sign In →'
             )}
           </button>
         </form>
@@ -119,7 +93,7 @@ export default function RegisterPage() {
           fontFamily: 'var(--font-mono)', fontSize: '.8rem',
           color: 'var(--text-muted)', textAlign: 'center', marginTop: '1.5rem'
         }}>
-          Already registered? <a href="/login" style={{ color: 'var(--neon-green)' }}>Log in here</a>
+          Don&apos;t have a team? <a href="/register" style={{ color: 'var(--neon-green)' }}>Register here</a>
         </p>
       </div>
     </main>

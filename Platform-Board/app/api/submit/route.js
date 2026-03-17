@@ -1,90 +1,170 @@
 import { sql, initializeDatabase } from '@/lib/db';
 import { NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
+import { getSession } from '@/lib/session';
+
+// ── In-memory rate limiter ──
+const rateMap = new Map();
+const RATE_LIMIT = 5;       // max submissions
+const RATE_WINDOW = 60000;  // per 60 seconds
+
+function checkRateLimit(teamId) {
+  const now = Date.now();
+  const entry = rateMap.get(teamId);
+  if (!entry || now > entry.resetAt) {
+    rateMap.set(teamId, { count: 1, resetAt: now + RATE_WINDOW });
+    return true;
+  }
+  entry.count++;
+  if (entry.count > RATE_LIMIT) return false;
+  return true;
+}
 
 export async function POST(request) {
   try {
     await initializeDatabase();
 
-    const { teamName, password, flag } = await request.json();
-
-    if (!teamName || !password || !flag) {
-      return NextResponse.json({ error: 'Team name, password, and flag are required.' }, { status: 400 });
+    // 1. Session auth
+    const team = await getSession(request);
+    if (!team) {
+      return NextResponse.json({ error: 'You must be logged in to submit flags.' }, { status: 401 });
     }
 
-    // Authenticate team
-    const teamRes = await sql`
-      SELECT id, name, password_hash, score
-      FROM teams
-      WHERE LOWER(name) = LOWER(${teamName})
+    // Rate limit
+    if (!checkRateLimit(team.id)) {
+      return NextResponse.json({ error: 'Too many submissions. Wait a minute.' }, { status: 429 });
+    }
+
+    const { flag } = await request.json();
+    if (!flag || !flag.trim()) {
+      return NextResponse.json({ error: 'Flag is required.' }, { status: 400 });
+    }
+
+    // 2. Look up challenge by flag
+    const { rows: challRows } = await sql`
+      SELECT id, name, flag, points, is_honeypot, tier
+      FROM challenges WHERE flag = ${flag.trim()}
     `;
 
-    if (teamRes.rows.length === 0) {
-      return NextResponse.json({ error: 'Team not found.' }, { status: 404 });
+    if (challRows.length === 0) {
+      return NextResponse.json({ error: 'Invalid flag. No points awarded.' }, { status: 400 });
     }
 
-    const team = teamRes.rows[0];
-    const passwordValid = await bcrypt.compare(password, team.password_hash);
+    const challenge = challRows[0];
 
-    if (!passwordValid) {
-      return NextResponse.json({ error: 'Invalid password.' }, { status: 401 });
-    }
-
-    // Find the challenge by matching the flag
-    const challRes = await sql`
-      SELECT id, name, flag, points, is_honeypot
-      FROM challenges
-      WHERE flag = ${flag}
-    `;
-
-    if (challRes.rows.length === 0) {
-      // Flag doesn't match any challenge — record as incorrect
+    // 3. Honeypot?
+    if (challenge.is_honeypot) {
+      const penalty = -50;
       await sql`
         INSERT INTO submissions (team_id, challenge_id, submitted_flag, is_correct, points_awarded)
-        VALUES (${team.id}, NULL, ${flag}, FALSE, 0)
+        VALUES (${team.id}, ${challenge.id}, ${flag.trim()}, FALSE, ${penalty})
       `;
-      return NextResponse.json({ error: 'Incorrect flag. No points awarded.' }, { status: 400 });
+      await sql`UPDATE teams SET score = score + ${penalty} WHERE id = ${team.id}`;
+
+      return NextResponse.json({
+        message: `🍯 HONEYPOT! You fell for "${challenge.name}". ${penalty} points.`,
+        pointsAwarded: penalty,
+        honeypot: true,
+      }, { status: 200 });
     }
 
-    const challenge = challRes.rows[0];
-
-    // Check if already submitted correctly
-    const dupCheck = await sql`
+    // 4. Already solved?
+    const { rows: dupRows } = await sql`
       SELECT id FROM submissions
-      WHERE team_id = ${team.id}
-        AND challenge_id = ${challenge.id}
-        AND is_correct = TRUE
+      WHERE team_id = ${team.id} AND challenge_id = ${challenge.id} AND is_correct = TRUE
     `;
-
-    if (dupCheck.rows.length > 0) {
+    if (dupRows.length > 0) {
       return NextResponse.json({ error: 'You already solved this challenge.' }, { status: 409 });
     }
 
-    // Calculate points
-    let pointsAwarded = challenge.points;
-    let message = '';
+    // 5. Calculate points
+    const base = challenge.points;
 
-    if (challenge.is_honeypot) {
-      // Honeypot: DEDUCT points
-      pointsAwarded = -Math.abs(challenge.points);
-      message = `🍯 HONEYPOT! You fell for "${challenge.name}". ${pointsAwarded} points.`;
-    } else {
-      // Normal challenge: ADD points
-      message = `✅ Correct! "${challenge.name}" solved. +${pointsAwarded} points!`;
-    }
+    // First blood check
+    const { rows: solveCountRows } = await sql`
+      SELECT COUNT(*) as cnt FROM submissions
+      WHERE challenge_id = ${challenge.id} AND is_correct = TRUE
+    `;
+    const existingSolves = Number(solveCountRows[0].cnt);
+    const firstBloodBonus = existingSolves === 0 ? Math.floor(base * 0.10) : 0;
 
-    // Record submission
+    // Hint deductions
+    const { rows: hintRows } = await sql`
+      SELECT COALESCE(SUM(points_lost), 0) as total_lost
+      FROM hint_unlocks
+      WHERE team_id = ${team.id}
+        AND hint_id IN (SELECT id FROM hints WHERE challenge_id = ${challenge.id})
+    `;
+    const hintPenalty = Number(hintRows[0].total_lost);
+
+    const total = base + firstBloodBonus - hintPenalty;
+
+    // 6. Record submission
     await sql`
       INSERT INTO submissions (team_id, challenge_id, submitted_flag, is_correct, points_awarded)
-      VALUES (${team.id}, ${challenge.id}, ${flag}, TRUE, ${pointsAwarded})
+      VALUES (${team.id}, ${challenge.id}, ${flag.trim()}, TRUE, ${total})
     `;
 
-    // Update team score
-    await sql`
-      UPDATE teams SET score = score + ${pointsAwarded} WHERE id = ${team.id}
+    // 7. Update team score
+    await sql`UPDATE teams SET score = score + ${total} WHERE id = ${team.id}`;
+
+    // 8. Build response
+    let tierUnlocked = null;
+    let bonusAwarded = 0;
+
+    // 9. Tier completion check
+    const tier = challenge.tier ?? 0;
+
+    const { rows: totalInTierRows } = await sql`
+      SELECT COUNT(*) as cnt FROM challenges WHERE tier = ${tier} AND is_honeypot = FALSE
+    `;
+    const totalInTier = Number(totalInTierRows[0].cnt);
+
+    const { rows: solvedInTierRows } = await sql`
+      SELECT COUNT(*) as cnt FROM submissions s
+      JOIN challenges c ON c.id = s.challenge_id
+      WHERE s.team_id = ${team.id} AND s.is_correct = TRUE AND c.tier = ${tier}
+    `;
+    const solvedInTier = Number(solvedInTierRows[0].cnt);
+
+    const { rows: alreadyUnlocked } = await sql`
+      SELECT id FROM tier_unlocks WHERE team_id = ${team.id} AND tier = ${tier}
     `;
 
-    return NextResponse.json({ message, points: pointsAwarded }, { status: 200 });
+    if (totalInTier > 0 && solvedInTier >= totalInTier && alreadyUnlocked.length === 0) {
+      bonusAwarded = 200;
+      try {
+        await sql`
+          INSERT INTO tier_unlocks (team_id, tier, bonus_awarded)
+          VALUES (${team.id}, ${tier}, ${bonusAwarded})
+        `;
+        await sql`UPDATE teams SET score = score + ${bonusAwarded} WHERE id = ${team.id}`;
+        tierUnlocked = tier;
+      } catch (e) {
+        // Unique constraint — already awarded, ignore
+      }
+    }
+
+    let message = `✅ Correct! "${challenge.name}" solved. +${total} points!`;
+    if (firstBloodBonus > 0) {
+      message += ` 🩸 First Blood! +${firstBloodBonus} bonus!`;
+    }
+    if (hintPenalty > 0) {
+      message += ` (${hintPenalty} pts deducted for hints)`;
+    }
+    if (tierUnlocked !== null) {
+      message += ` 🎉 Tier ${tierUnlocked} completed! +${bonusAwarded} bonus!`;
+    }
+
+    return NextResponse.json({
+      message,
+      pointsAwarded: total,
+      firstBlood: firstBloodBonus > 0,
+      firstBloodBonus,
+      hintPenalty,
+      tierUnlocked,
+      bonusAwarded,
+    }, { status: 200 });
+
   } catch (err) {
     console.error('Submit error:', err);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });

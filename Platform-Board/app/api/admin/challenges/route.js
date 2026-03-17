@@ -13,9 +13,9 @@ export async function GET(request) {
   try {
     await initializeDatabase();
     const { rows } = await sql`
-      SELECT id, name, category, points, is_honeypot, created_at
+      SELECT id, name, category, points, tier, is_honeypot, created_at
       FROM challenges
-      ORDER BY created_at DESC
+      ORDER BY tier ASC, created_at DESC
     `;
     return NextResponse.json(rows);
   } catch (err) {
@@ -29,15 +29,15 @@ export async function POST(request) {
   }
   try {
     await initializeDatabase();
-    const { name, category, flag, points, is_honeypot } = await request.json();
+    const { name, category, flag, points, tier, is_honeypot } = await request.json();
 
     if (!name || !flag || points === undefined) {
       return NextResponse.json({ error: 'Name, flag, and points are required.' }, { status: 400 });
     }
 
     await sql`
-      INSERT INTO challenges (name, category, flag, points, is_honeypot)
-      VALUES (${name}, ${category || 'General'}, ${flag}, ${Number(points)}, ${!!is_honeypot})
+      INSERT INTO challenges (name, category, flag, points, tier, is_honeypot)
+      VALUES (${name}, ${category || 'General'}, ${flag}, ${Number(points)}, ${Number(tier) || 0}, ${!!is_honeypot})
     `;
 
     return NextResponse.json({ message: 'Challenge created.' }, { status: 201 });

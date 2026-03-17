@@ -13,9 +13,10 @@ export async function GET(request) {
   try {
     await initializeDatabase();
     const { rows } = await sql`
-      SELECT id, name, score, created_at
-      FROM teams
-      ORDER BY score DESC, created_at ASC
+      SELECT h.id, h.challenge_id, h.content, h.penalty_pct, c.name as challenge_name
+      FROM hints h
+      JOIN challenges c ON c.id = h.challenge_id
+      ORDER BY c.name ASC, h.id ASC
     `;
     return NextResponse.json(rows);
   } catch (err) {
@@ -29,20 +30,18 @@ export async function POST(request) {
   }
   try {
     await initializeDatabase();
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-    const action = searchParams.get('action');
+    const { challenge_id, content, penalty_pct } = await request.json();
 
-    if (action === 'reset' && id) {
-      // Reset team: zero score, delete solves, hint_unlocks, tier_unlocks
-      await sql`DELETE FROM submissions WHERE team_id = ${id}`;
-      await sql`DELETE FROM hint_unlocks WHERE team_id = ${id}`;
-      await sql`DELETE FROM tier_unlocks WHERE team_id = ${id}`;
-      await sql`UPDATE teams SET score = 0 WHERE id = ${id}`;
-      return NextResponse.json({ message: 'Team reset.' });
+    if (!challenge_id || !content) {
+      return NextResponse.json({ error: 'challenge_id and content are required.' }, { status: 400 });
     }
 
-    return NextResponse.json({ error: 'Unknown action.' }, { status: 400 });
+    await sql`
+      INSERT INTO hints (challenge_id, content, penalty_pct)
+      VALUES (${Number(challenge_id)}, ${content}, ${Number(penalty_pct) || 25})
+    `;
+
+    return NextResponse.json({ message: 'Hint created.' }, { status: 201 });
   } catch (err) {
     return NextResponse.json({ error: 'Server error.' }, { status: 500 });
   }
@@ -55,9 +54,9 @@ export async function DELETE(request) {
   try {
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
-    if (!id) return NextResponse.json({ error: 'Missing team id.' }, { status: 400 });
+    if (!id) return NextResponse.json({ error: 'Missing hint id.' }, { status: 400 });
 
-    await sql`DELETE FROM teams WHERE id = ${id}`;
+    await sql`DELETE FROM hints WHERE id = ${id}`;
     return NextResponse.json({ message: 'Deleted.' });
   } catch (err) {
     return NextResponse.json({ error: 'Server error.' }, { status: 500 });

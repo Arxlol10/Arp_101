@@ -1,20 +1,31 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function SubmitFlagPage() {
-  const [teamName, setTeamName]   = useState('');
-  const [password, setPassword]   = useState('');
-  const [flag, setFlag]           = useState('');
-  const [status, setStatus]       = useState(null);
-  const [loading, setLoading]     = useState(false);
+  const [team, setTeam]     = useState(null);
+  const [flag, setFlag]     = useState('');
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    fetch('/api/me')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => {
+        if (data) setTeam(data);
+        else router.push('/login');
+      })
+      .catch(() => router.push('/login'));
+  }, []);
 
   async function handleSubmit(e) {
     e.preventDefault();
     setStatus(null);
 
-    if (!teamName.trim() || !password || !flag.trim()) {
-      setStatus({ type: 'error', message: 'All fields are required.' });
+    if (!flag.trim()) {
+      setStatus({ type: 'error', message: 'Flag is required.' });
       return;
     }
 
@@ -23,15 +34,11 @@ export default function SubmitFlagPage() {
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          teamName: teamName.trim(),
-          password,
-          flag: flag.trim(),
-        }),
+        body: JSON.stringify({ flag: flag.trim() }),
       });
       const data = await res.json();
       if (res.ok) {
-        setStatus({ type: 'success', message: data.message });
+        setStatus({ type: data.honeypot ? 'error' : 'success', message: data.message });
         setFlag('');
       } else {
         setStatus({ type: 'error', message: data.error || 'Submission failed.' });
@@ -43,10 +50,20 @@ export default function SubmitFlagPage() {
     }
   }
 
+  if (!team) {
+    return (
+      <main className="page">
+        <div style={{ textAlign: 'center', padding: '4rem' }}>
+          <div className="spinner" style={{ margin: '0 auto' }}></div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="page">
       <h1 className="page__title">🚩 Submit Flag</h1>
-      <p className="page__subtitle">// submit your captured flag for points</p>
+      <p className="page__subtitle">// submitting as <span style={{ color: 'var(--neon-green)' }}>{team.name}</span></p>
 
       <div className="card" style={{ maxWidth: 520 }}>
         {status && (
@@ -57,36 +74,12 @@ export default function SubmitFlagPage() {
 
         <form onSubmit={handleSubmit} id="submit-flag-form">
           <div className="form-group">
-            <label className="form-label" htmlFor="submit-team">Team Name</label>
-            <input
-              id="submit-team"
-              className="form-input"
-              type="text"
-              placeholder="Your team name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label" htmlFor="submit-password">Team Password</label>
-            <input
-              id="submit-password"
-              className="form-input"
-              type="password"
-              placeholder="Your team password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
-
-          <div className="form-group">
             <label className="form-label" htmlFor="submit-flag">Flag</label>
             <input
               id="submit-flag"
               className="form-input"
               type="text"
-              placeholder="ARP{...}"
+              placeholder="FLAG{...}"
               value={flag}
               onChange={(e) => setFlag(e.target.value)}
               style={{ fontFamily: 'var(--font-mono)', letterSpacing: '1px' }}
@@ -105,6 +98,14 @@ export default function SubmitFlagPage() {
             )}
           </button>
         </form>
+
+        <p style={{
+          fontFamily: 'var(--font-mono)', fontSize: '.78rem',
+          color: 'var(--text-muted)', textAlign: 'center', marginTop: '1.25rem'
+        }}>
+          Tip: You can also submit flags directly from the{' '}
+          <a href="/challenges" style={{ color: 'var(--neon-green)' }}>Challenges</a> page.
+        </p>
       </div>
     </main>
   );

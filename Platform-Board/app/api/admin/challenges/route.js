@@ -29,15 +29,24 @@ export async function POST(request) {
   }
   try {
     await initializeDatabase();
-    const { name, category, flag, points, tier, is_honeypot } = await request.json();
+    const { 
+      name, category, flag, points, tier, is_honeypot, 
+      difficulty, description, attachment_url, attachment_name, attachment_size, attachment_hash 
+    } = await request.json();
 
     if (!name || !flag || points === undefined) {
       return NextResponse.json({ error: 'Name, flag, and points are required.' }, { status: 400 });
     }
 
     await sql`
-      INSERT INTO challenges (name, category, flag, points, tier, is_honeypot)
-      VALUES (${name}, ${category || 'General'}, ${flag}, ${Number(points)}, ${Number(tier) || 0}, ${!!is_honeypot})
+      INSERT INTO challenges (
+        name, category, flag, points, tier, is_honeypot, 
+        difficulty, description, attachment_url, attachment_name, attachment_size, attachment_hash
+      )
+      VALUES (
+        ${name}, ${category || 'General'}, ${flag}, ${Number(points)}, ${Number(tier) || 0}, ${!!is_honeypot},
+        ${difficulty || 'Medium'}, ${description || ''}, ${attachment_url || null}, ${attachment_name || null}, ${attachment_size || null}, ${attachment_hash || null}
+      )
     `;
 
     return NextResponse.json({ message: 'Challenge created.' }, { status: 201 });

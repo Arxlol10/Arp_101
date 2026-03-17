@@ -21,6 +21,10 @@ export default function AdminPage() {
   const [chPoints, setChPoints]   = useState('');
   const [chTier, setChTier]       = useState('0');
   const [chHoneypot, setChHoneypot] = useState(false);
+  const [chDifficulty, setChDifficulty] = useState('Medium');
+  const [chDescription, setChDescription] = useState('');
+  const [chAttUrl, setChAttUrl] = useState('');
+  const [chAttName, setChAttName] = useState('');
 
   // -- New hint form
   const [hintChallId, setHintChallId] = useState('');
@@ -96,13 +100,18 @@ export default function AdminPage() {
   async function addChallenge(e) {
     e.preventDefault();
     if (!chName || !chFlag || !chPoints) { setStatus({ type: 'error', message: 'Name, flag, points required.' }); return; }
+    const payload = {
+      name: chName, category: chCategory || 'General', flag: chFlag, points: Number(chPoints), tier: Number(chTier), is_honeypot: chHoneypot,
+      difficulty: chDifficulty.toUpperCase(), description: chDescription, attachment_url: chAttUrl, attachment_name: chAttName
+    };
     const res = await fetch('/api/admin/challenges', {
       method: 'POST', headers,
-      body: JSON.stringify({ name: chName, category: chCategory || 'General', flag: chFlag, points: Number(chPoints), tier: Number(chTier), is_honeypot: chHoneypot }),
+      body: JSON.stringify(payload),
     });
     if (res.ok) {
       setStatus({ type: 'success', message: 'Challenge added!' });
       setChName(''); setChCategory(''); setChFlag(''); setChPoints(''); setChTier('0'); setChHoneypot(false);
+      setChDifficulty('Medium'); setChDescription(''); setChAttUrl(''); setChAttName('');
       fetchData();
     } else { const d = await res.json(); setStatus({ type: 'error', message: d.error }); }
   }
@@ -273,13 +282,13 @@ export default function AdminPage() {
 
       {/* ADD CHALLENGE */}
       {tab === 'add-challenge' && (
-        <div className="card" style={{ maxWidth: 520 }}>
+        <div className="card" style={{ maxWidth: 800 }}>
           <form onSubmit={addChallenge}>
-            <div className="form-group">
-              <label className="form-label">Name</label>
-              <input className="form-input" type="text" value={chName} onChange={(e) => setChName(e.target.value)} />
-            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+              <div className="form-group">
+                <label className="form-label">Name</label>
+                <input className="form-input" type="text" value={chName} onChange={(e) => setChName(e.target.value)} />
+              </div>
               <div className="form-group">
                 <label className="form-label">Category</label>
                 <input className="form-input" type="text" value={chCategory} onChange={(e) => setChCategory(e.target.value)} placeholder="Web, Crypto..." />
@@ -291,12 +300,25 @@ export default function AdminPage() {
                   <option value="3">T3</option><option value="4">T4</option>
                 </select>
               </div>
+              <div className="form-group">
+                <label className="form-label">Difficulty</label>
+                <select className="form-input" value={chDifficulty} onChange={(e) => setChDifficulty(e.target.value)}>
+                  <option value="Easy">Easy</option><option value="Medium">Medium</option><option value="Hard">Hard</option>
+                </select>
+              </div>
             </div>
+            
+            <div className="form-group">
+              <label className="form-label">Description (Markdown)</label>
+              <textarea className="form-input" rows="4" value={chDescription} onChange={(e) => setChDescription(e.target.value)} placeholder="Enter markdown description..."></textarea>
+            </div>
+            
             <div className="form-group">
               <label className="form-label">Flag</label>
               <input className="form-input" type="text" value={chFlag} onChange={(e) => setChFlag(e.target.value)} style={{ fontFamily: 'var(--font-mono)' }} />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0,1fr) minmax(0,1fr) minmax(0,1fr)', gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label">Points</label>
                 <input className="form-input" type="number" value={chPoints} onChange={(e) => setChPoints(e.target.value)} />
@@ -309,6 +331,18 @@ export default function AdminPage() {
                 </label>
               </div>
             </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginTop: '1rem', marginBottom: '1.5rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Attachment URL</label>
+                <input className="form-input" type="text" value={chAttUrl} onChange={(e) => setChAttUrl(e.target.value)} placeholder="https://..." />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Attachment Name</label>
+                <input className="form-input" type="text" value={chAttName} onChange={(e) => setChAttName(e.target.value)} placeholder="binary.elf" />
+              </div>
+            </div>
+            
             <button type="submit" className="btn btn--primary btn--full">Add Challenge →</button>
           </form>
         </div>

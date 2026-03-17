@@ -13,7 +13,7 @@ export async function GET(request) {
 
     // Get all non-honeypot challenges (never expose flag values)
     const { rows: challenges } = await sql`
-      SELECT id, name, category, points, tier
+      SELECT id, name, category, points, tier, difficulty, description, attachment_name, attachment_url
       FROM challenges
       WHERE is_honeypot = FALSE
       ORDER BY tier ASC, points ASC, name ASC
@@ -96,6 +96,9 @@ export async function GET(request) {
         category: ch.category,
         points: ch.points,
         tier: t,
+        difficulty: ch.difficulty,
+        description: ch.description,
+        attachment: ch.attachment_name ? { name: ch.attachment_name, url: ch.attachment_url } : null,
         solveCount: solveMap[ch.id] || 0,
         firstBlood: firstBloodMap[ch.id] === team.id,
         solved: solvedSet.has(ch.id),

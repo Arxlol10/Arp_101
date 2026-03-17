@@ -24,6 +24,11 @@
   --glow-blue:    0 0 20px rgba(0,212,255,.25), 0 0 60px rgba(0,212,255,.08);
   --glow-red:     0 0 20px rgba(255,59,92,.3),  0 0 60px rgba(255,59,92,.1);
 
+  /* — Difficulty Tokens — */
+  --badge-easy:   var(--neon-green);
+  --badge-medium: var(--neon-orange);
+  --badge-hard:   var(--neon-red);
+
   /* — Text — */
   --text-primary:    #e2e8f0;
   --text-secondary:  #94a3b8;
@@ -547,8 +552,64 @@ body::before {
 }
 
 /* ═══════════════════════════════════════════
-   RESPONSIVE
+   TERMINAL UI / SCANLINES
    ═══════════════════════════════════════════ */
+.scanline {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 50%,
+    rgba(0, 0, 0, 0.25) 51%
+  );
+  background-size: 100% 4px;
+  opacity: 0.15;
+}
+
+.terminal-card {
+  background: rgba(10, 13, 20, 0.95);
+  border: 1px solid rgba(0, 255, 136, 0.3);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.05);
+  border-radius: var(--radius-sm);
+  padding: 2.5rem;
+  backdrop-filter: blur(10px);
+}
+
+.terminal-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: #000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.8rem 1rem;
+  border-radius: var(--radius-sm);
+  transition: all 0.2s;
+}
+
+.terminal-input-wrapper:focus-within {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.1);
+}
+
+.terminal-prompt {
+  color: var(--neon-green);
+  font-family: var(--font-mono);
+  font-weight: 700;
+  user-select: none;
+}
+
+.terminal-input {
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  width: 100%;
+  outline: none;
+}
+
 @media (max-width: 768px) {
   .navbar {
     padding: 0 1rem;

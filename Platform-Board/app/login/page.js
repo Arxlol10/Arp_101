@@ -4,98 +4,118 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
-  const [teamName, setTeamName] = useState('');
-  const [password, setPassword] = useState('');
-  const [status, setStatus]     = useState(null);
-  const [loading, setLoading]   = useState(false);
   const router = useRouter();
+  const [name, setName] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e) {
     e.preventDefault();
-    setStatus(null);
-
-    if (!teamName.trim() || !password) {
-      setStatus({ type: 'error', message: 'All fields are required.' });
-      return;
-    }
-
+    if (!name || !password) return;
+    
     setLoading(true);
-    try {
-      const res = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: teamName.trim(), password }),
-      });
+    setError('');
+
+    const res = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, password }),
+    });
+
+    if (res.ok) {
+      router.push('/challenges');
+      router.refresh();
+    } else {
       const data = await res.json();
-      if (res.ok) {
-        router.push('/challenges');
-      } else {
-        setStatus({ type: 'error', message: data.error || 'Login failed.' });
-      }
-    } catch {
-      setStatus({ type: 'error', message: 'Network error. Try again.' });
-    } finally {
+      setError(data.error || 'Authentication failed');
       setLoading(false);
     }
   }
 
   return (
-    <main className="page">
-      <h1 className="page__title">🔑 Team Login</h1>
-      <p className="page__subtitle">// sign in to submit flags and view challenges</p>
+    <main className="page" style={{ minHeight: 'calc(100vh - 64px)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}>
+      <div className="scanline"></div>
+      
+      <div style={{ maxWidth: 440, width: '100%', marginBottom: '4rem' }}>
+        
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <h1 style={{ fontFamily: 'var(--font-mono)', fontSize: '2.5rem', color: 'var(--text-primary)', textShadow: '0 0 20px rgba(255,255,255,0.1)', letterSpacing: '4px', margin: 0 }}>ARP_101</h1>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '.85rem', color: 'var(--neon-green)', marginTop: '.5rem', textTransform: 'uppercase', letterSpacing: '2px' }}>Authorized Access Only</p>
+        </div>
 
-      <div className="card" style={{ maxWidth: 440 }}>
-        {status && (
-          <div className={`alert alert--${status.type}`}>
-            {status.message}
-          </div>
-        )}
+        <div className="terminal-card">
+          {error && <div className="alert alert--error" style={{ marginBottom: '1.5rem' }}>{error}</div>}
+          
+          <form onSubmit={handleSubmit} style={{ display: 'grid', gap: '1.5rem' }}>
+            
+            <div className="form-group" style={{ margin: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.5rem' }}>
+                <label className="form-label" style={{ color: 'var(--text-primary)' }}>Team Alias</label>
+              </div>
+              <div className="terminal-input-wrapper">
+                <span className="terminal-prompt">&gt;</span>
+                <input 
+                  type="text" 
+                  className="terminal-input"
+                  placeholder="enter team alias..." 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  disabled={loading}
+                  autoFocus
+                  required
+                />
+              </div>
+            </div>
 
-        <form onSubmit={handleSubmit} id="login-form">
-          <div className="form-group">
-            <label className="form-label" htmlFor="login-team">Team Name</label>
-            <input
-              id="login-team"
-              className="form-input"
-              type="text"
-              placeholder="Enter your team name"
-              value={teamName}
-              onChange={(e) => setTeamName(e.target.value)}
-            />
-          </div>
+            <div className="form-group" style={{ margin: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '.5rem' }}>
+                <label className="form-label" style={{ color: 'var(--text-primary)' }}>Access Key</label>
+              </div>
+              <div className="terminal-input-wrapper">
+                <span className="terminal-prompt">&gt;</span>
+                <input 
+                  type="password" 
+                  className="terminal-input"
+                  placeholder="••••••••••••" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  disabled={loading}
+                  required
+                />
+              </div>
+            </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              className="form-input"
-              type="password"
-              placeholder="Your team password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-          </div>
+            <button 
+              type="submit" 
+              className="btn btn--primary btn--full" 
+              disabled={loading || !name || !password}
+              style={{ padding: '1rem', marginTop: '.5rem', fontSize: '1rem', letterSpacing: '2px', textTransform: 'uppercase' }}
+            >
+              {loading ? 'Authenticating...' : 'Authenticate'}
+            </button>
+            
+          </form>
 
-          <button
-            type="submit"
-            className={`btn btn--primary btn--full ${loading ? 'btn--disabled' : ''}`}
-            disabled={loading}
-          >
-            {loading ? (
-              <><span className="spinner" style={{ width: 16, height: 16 }}></span> Signing in…</>
-            ) : (
-              'Sign In →'
-            )}
-          </button>
-        </form>
+        </div>
 
-        <p style={{
-          fontFamily: 'var(--font-mono)', fontSize: '.8rem',
-          color: 'var(--text-muted)', textAlign: 'center', marginTop: '1.5rem'
-        }}>
-          Don&apos;t have a team? <a href="/register" style={{ color: 'var(--neon-green)' }}>Register here</a>
-        </p>
+        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
+          <p style={{ fontFamily: 'var(--font-mono)', fontSize: '.85rem', color: 'var(--text-muted)' }}>
+            New team in the arena? <a href="/register" style={{ color: 'var(--neon-green)', textDecoration: 'none', borderBottom: '1px dashed var(--neon-green)' }}>Register your team</a>
+          </p>
+        </div>
+
       </div>
+
+      {/* Footer server status ticker */}
+      <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, padding: '.75rem 2rem', background: '#000', borderTop: 'var(--border-subtle)', display: 'flex', justifyContent: 'space-between', fontFamily: 'var(--font-mono)', fontSize: '.7rem', color: 'var(--text-muted)' }}>
+        <div style={{ display: 'flex', gap: '1.5rem' }}>
+          <span style={{ display: 'flex', alignItems: 'center', gap: '.4rem' }}><span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: 'var(--neon-green)', boxShadow: '0 0 8px var(--neon-green)' }}></span> SERVER: Online</span>
+          <span>LAT: 24ms</span>
+        </div>
+        <div>v2.0.4-stable</div>
+      </div>
+
     </main>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import './globals.css';
+import '../globals.css';
 
 export default function NavbarClient({ children }) {
   const [team, setTeam] = useState(null);

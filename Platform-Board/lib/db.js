@@ -30,7 +30,7 @@ export async function initializeDatabase() {
     );
   `;
 
-  // ── Challenges (with tier column) ──
+  // ── Challenges (with tier and new UI columns) ──
   await pgSql`
     CREATE TABLE IF NOT EXISTS challenges (
       id SERIAL PRIMARY KEY,
@@ -40,6 +40,12 @@ export async function initializeDatabase() {
       points INTEGER NOT NULL,
       tier SMALLINT DEFAULT 0,
       is_honeypot BOOLEAN DEFAULT FALSE,
+      difficulty VARCHAR(10) DEFAULT 'MEDIUM',
+      description TEXT DEFAULT '',
+      attachment_url VARCHAR(500) DEFAULT NULL,
+      attachment_name VARCHAR(200) DEFAULT NULL,
+      attachment_size VARCHAR(50) DEFAULT NULL,
+      attachment_hash VARCHAR(100) DEFAULT NULL,
       created_at TIMESTAMP DEFAULT NOW()
     );
   `;
@@ -105,12 +111,13 @@ export async function initializeDatabase() {
   // ── Indexes ──
   await pgSql`CREATE INDEX IF NOT EXISTS idx_submissions_team ON submissions(team_id);`;
   await pgSql`CREATE INDEX IF NOT EXISTS idx_submissions_challenge ON submissions(challenge_id);`;
+  await pgSql`CREATE INDEX IF NOT EXISTS idx_submissions_time ON submissions(submitted_at DESC);`;
   await pgSql`CREATE INDEX IF NOT EXISTS idx_sessions_token ON sessions(token);`;
   await pgSql`CREATE INDEX IF NOT EXISTS idx_sessions_team ON sessions(team_id);`;
   await pgSql`CREATE INDEX IF NOT EXISTS idx_hints_challenge ON hints(challenge_id);`;
   await pgSql`CREATE INDEX IF NOT EXISTS idx_tier_unlocks_team ON tier_unlocks(team_id);`;
 
-  // ── Add tier column if it doesn't exist (migration for existing DBs) ──
+  // ── Add new columns if they don't exist (migrations for existing DBs) ──
   await pgSql`
     DO $$
     BEGIN
@@ -119,6 +126,18 @@ export async function initializeDatabase() {
         WHERE table_name='challenges' AND column_name='tier'
       ) THEN
         ALTER TABLE challenges ADD COLUMN tier SMALLINT DEFAULT 0;
+      END IF;
+
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name='challenges' AND column_name='difficulty'
+      ) THEN
+        ALTER TABLE challenges ADD COLUMN difficulty VARCHAR(10) DEFAULT 'MEDIUM';
+        ALTER TABLE challenges ADD COLUMN description TEXT DEFAULT '';
+        ALTER TABLE challenges ADD COLUMN attachment_url VARCHAR(500) DEFAULT NULL;
+        ALTER TABLE challenges ADD COLUMN attachment_name VARCHAR(200) DEFAULT NULL;
+        ALTER TABLE challenges ADD COLUMN attachment_size VARCHAR(50) DEFAULT NULL;
+        ALTER TABLE challenges ADD COLUMN attachment_hash VARCHAR(100) DEFAULT NULL;
       END IF;
     END $$;
   `;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -13,6 +13,7 @@ function getDifficultyBadge(diff) {
 
 export default function ChallengeDetailPage({ params }) {
   const router = useRouter();
+  const { id } = use(params);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   
@@ -22,7 +23,7 @@ export default function ChallengeDetailPage({ params }) {
 
   useEffect(() => {
     async function fetchChallenge() {
-      const res = await fetch(`/api/challenges/${params.id}`);
+      const res = await fetch(`/api/challenges/${id}`);
       if (res.status === 401) { router.push('/login'); return; }
       if (res.status === 404) { router.push('/challenges'); return; }
       if (res.ok) {
@@ -31,7 +32,7 @@ export default function ChallengeDetailPage({ params }) {
       setLoading(false);
     }
     fetchChallenge();
-  }, [params.id, router]);
+  }, [id, router]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -60,6 +61,24 @@ export default function ChallengeDetailPage({ params }) {
       }
     } catch {
       setSubmitStatus({ type: 'error', msg: 'CONNECTION INTERRUPTED.' });
+    }
+    setSubmitting(false);
+  }
+
+  async function handleUnlockHint(hintId, penalty) {
+    if (!confirm(`Unlock this hint? It will reduce your award by ${penalty}% if you solve this challenge.`)) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch(`/api/hints/${hintId}/unlock`, { method: 'POST' });
+      if (res.ok) {
+        const refreshRes = await fetch(`/api/challenges/${id}`);
+        if (refreshRes.ok) setData(await refreshRes.json());
+      } else {
+        const d = await res.json();
+        alert(d.error || 'Failed to unlock hint.');
+      }
+    } catch {
+      alert('Network error.');
     }
     setSubmitting(false);
   }
@@ -131,6 +150,39 @@ export default function ChallengeDetailPage({ params }) {
             </div>
           )}
 
+          {/* Hints Section */}
+          {c.hints && c.hints.length > 0 && (
+            <div className="card" style={{ padding: '2rem' }}>
+              <h3 style={{ fontFamily: 'var(--font-mono)', fontSize: '.9rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '1.25rem' }}>
+                &gt; INTELLIGENCE_HINTS
+              </h3>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                {c.hints.map((hint, i) => (
+                  <div key={hint.id} style={{ border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', padding: '1.25rem', background: 'var(--bg-base)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: hint.unlocked ? '.75rem' : 0 }}>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: '.85rem', color: 'var(--neon-orange)', fontWeight: 700 }}>HINT 0{i+1}</span>
+                      {!hint.unlocked && (
+                        <button 
+                          onClick={() => handleUnlockHint(hint.id, hint.penaltyPct)}
+                          className="btn" 
+                          style={{ padding: '.4rem .8rem', fontSize: '.75rem', background: 'rgba(255,138,0,0.1)', color: 'var(--neon-orange)', border: '1px solid rgba(255,138,0,0.3)', letterSpacing: '1px' }}
+                          disabled={submitting}
+                        >
+                          UNLOCK (-{hint.penaltyPct}%)
+                        </button>
+                      )}
+                    </div>
+                    {hint.unlocked && (
+                      <div style={{ fontSize: '.9rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+                        {hint.content}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          
         </div>
 
         {/* ── RIGHT COLUMN: Submit & Stats ── */}

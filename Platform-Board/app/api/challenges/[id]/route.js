@@ -8,7 +8,8 @@ export async function GET(request, { params }) {
     const team = await getSession(request);
     if (!team) return NextResponse.json({ error: 'Not logged in' }, { status: 401 });
 
-    const id = parseInt(params.id, 10);
+    const resolvedParams = await params;
+    const id = parseInt(resolvedParams.id, 10);
     if (isNaN(id)) return NextResponse.json({ error: 'Invalid ID' }, { status: 400 });
 
     // 1. Fetch challenge details
@@ -43,6 +44,24 @@ export async function GET(request, { params }) {
     `;
     const solvedByMe = teamSolves.length > 0;
 
+    // 4. Fetch hints
+    const { rows: hints } = await sql`
+      SELECT id, content, penalty_pct 
+      FROM hints WHERE challenge_id = ${id}
+      ORDER BY penalty_pct ASC
+    `;
+    const { rows: unlockedHints } = await sql`
+      SELECT hint_id FROM hint_unlocks WHERE team_id = ${team.id}
+    `;
+    const unlockedSet = new Set(unlockedHints.map(h => h.hint_id));
+
+    const processedHints = hints.map(h => ({
+      id: h.id,
+      penaltyPct: h.penalty_pct,
+      unlocked: unlockedSet.has(h.id),
+      content: unlockedSet.has(h.id) ? h.content : null
+    }));
+
     return NextResponse.json({
       challenge: {
         id: challenge.id,
@@ -58,6 +77,7 @@ export async function GET(request, { params }) {
           size: challenge.attachment_size,
           hash: challenge.attachment_hash
         } : null,
+        hints: processedHints,
       },
       stats: {
         solves: solvesCount,

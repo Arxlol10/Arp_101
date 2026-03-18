@@ -670,21 +670,35 @@ EOF
     info "Copying challenge files..."
 
     cp "$CTF/T1-Stego/stego-01/suspicious.png"   /var/www/html/files/stego/ 2>/dev/null || warn "Missing: suspicious.png"
-    cp "$CTF/T1-Stego/stego-01/README.txt"       /var/www/html/files/stego/stego01_README.txt 2>/dev/null || true
+    cat > /var/www/html/files/stego/stego01_README.txt << 'EOF'
+I hide in plain sight, behind a mask of colors. Look beyond the canvas.
+EOF
     cp "$CTF/T1-Stego/stego-02/transmission.wav" /var/www/html/files/stego/ 2>/dev/null || warn "Missing: transmission.wav"
-    cp "$CTF/T1-Stego/stego-02/hint.txt"         /var/www/html/files/stego/stego02_hint.txt 2>/dev/null || true
-    cp "$CTF/T1-Stego/stego-02/README.txt"       /var/www/html/files/stego/stego02_README.txt 2>/dev/null || true
+    cat > /var/www/html/files/stego/stego02_hint.txt << 'EOF'
+Press the keys, hear the tones. A sequence of sounds holds the answer.
+EOF
+    cat > /var/www/html/files/stego/stego02_README.txt << 'EOF'
+Listen closely to the echoes of the past.
+EOF
 
     cp "$CTF/T1-Forensics/forensics-01/memory.dmp" /var/www/html/files/forensics/ 2>/dev/null || warn "Missing: memory.dmp"
-    cp "$CTF/T1-Forensics/forensics-01/README.txt" /var/www/html/files/forensics/forensics01_README.txt 2>/dev/null || true
+    cat > /var/www/html/files/forensics/forensics01_README.txt << 'EOF'
+A fleeting thought frozen in time. Dig through the mind's dump.
+EOF
     cp "$CTF/T1-Forensics/forensics-02/disk.img"   /var/www/html/files/forensics/ 2>/dev/null || warn "Missing: disk.img"
-    cp "$CTF/T1-Forensics/forensics-02/README.txt" /var/www/html/files/forensics/forensics02_README.txt 2>/dev/null || true
+    cat > /var/www/html/files/forensics/forensics02_README.txt << 'EOF'
+A graveyard of deleted tales. Carve out what was lost.
+EOF
 
     cp "$CTF/T1-Crypto/crypto-04/xor_cipher.bin"   /var/www/html/files/crypto/ 2>/dev/null || warn "Missing: xor_cipher.bin"
-    cp "$CTF/T1-Crypto/crypto-04/note.txt"         /var/www/html/files/crypto/ 2>/dev/null || true
-    cp "$CTF/T1-Crypto/crypto-04/README.txt"       /var/www/html/files/crypto/crypto04_README.txt 2>/dev/null || true
+    cp "$CTF/T1-Crypto/crypto-04/note.txt"         /var/www/html/files/crypto/ 2>/dev/null || true # Keeping 10% of hints
+    cat > /var/www/html/files/crypto/crypto04_README.txt << 'EOF'
+Two paths converge to reveal the truth. Exclusive but not exclusionary.
+EOF
     cp "$CTF/T1-Crypto/crypto-05/vigenere.txt"     /var/www/html/files/crypto/ 2>/dev/null || warn "Missing: vigenere.txt"
-    cp "$CTF/T1-Crypto/crypto-05/README.txt"       /var/www/html/files/crypto/crypto05_README.txt 2>/dev/null || true
+    cat > /var/www/html/files/crypto/crypto05_README.txt << 'EOF'
+A shifting grid, a hidden word. The key repeats as the message flows.
+EOF
     cp "$CTF/T1-Crypto/crypto-hp01/rsa_params.txt" /var/www/html/files/crypto/ 2>/dev/null || true
     cp "$CTF/T1-Crypto/crypto-hp01/ciphertext.txt" /var/www/html/files/crypto/ 2>/dev/null || true
 
@@ -695,7 +709,9 @@ EOF
     cp "$CTF/T2-Forensics/forensics-03/analyst_db.sql"       /var/www/html/files/forensics/ 2>/dev/null || true
     cp "$CTF/T2-Forensics/forensics-05/dmesg.log"            /var/www/html/files/forensics/ 2>/dev/null || true
     cp "$CTF/T2-Crypto/crypto-06/encrypted_bash_history.enc" /var/www/html/files/crypto/   2>/dev/null || true
-    cp "$CTF/T2-Crypto/crypto-06/analyst_note.txt"           /var/www/html/files/crypto/   2>/dev/null || true
+    cat > /var/www/html/files/crypto/analyst_note.txt << 'EOF'
+Salty tears encrypt the past. History is written with 17 grains.
+EOF
     cp "$CTF/T2-Reverse/reverse-01/license_validator.py"     /var/www/html/files/misc/     2>/dev/null || true
 
     for f in engineer_password.txt .secret_key database_backup.sql id_rsa_engineer config.enc .bash_history_leak escalation_notes.md; do
@@ -708,7 +724,9 @@ EOF
     cp "$CTF/T4-Honeypots/shadow.bak"    /var/www/html/files/misc/ 2>/dev/null || true
 
     cp "$CTF/T4-RootChallenges/root-01/final_fragment.enc" /root/ 2>/dev/null || true
-    cp "$CTF/T4-RootChallenges/root-01/master_note.txt"    /root/ 2>/dev/null || true
+    cat > /root/master_note.txt << 'EOF'
+The key to the final kingdom demands your name. The ultimate objective is your guide.
+EOF
     cp "$CTF/T4-RootChallenges/root-01/encryptor.py"       /root/ 2>/dev/null || true
     cp "$CTF/T4-RootChallenges/root-02/verify_master.py"   /root/ 2>/dev/null || true
     chmod 700 /root/verify_master.py 2>/dev/null || true
@@ -825,10 +843,8 @@ EOF
     fi
 
     cat > /opt/tools/README.txt << 'EOF'
-=== Internal Tools ===
-log_reader — Read application logs quickly.
-             Usage: /usr/local/bin/log_reader <logfile>
-Note: This tool has special read permissions across the system.
+A tool that reads all, bypassing the guards of permission. Use it wisely to uncover secrets.
+What was once forbidden is now open to your eyes.
 EOF
     chmod 644 /opt/tools/README.txt
 

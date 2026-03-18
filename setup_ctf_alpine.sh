@@ -261,7 +261,7 @@ pm.min_spare_servers = 1
 pm.max_spare_servers = 3
 php_admin_value[session.save_path] = /var/lib/php83/sessions
 php_admin_value[session.cookie_httponly] = On
-php_admin_value[open_basedir] = /var/www/html/:/var/lib/php83/sessions/:/var/log/redteam/
+php_admin_value[open_basedir] = /var/www/html/:/var/lib/php83/sessions/:/var/log/redteam/:/etc/ctf/
 php_admin_value[disable_functions] = exec,system,passthru,shell_exec,popen,proc_open
 EOF
 
@@ -610,6 +610,102 @@ EOF
     chmod 644 /var/www/html/files/crypto/crypto03_hash.txt
     log "Honeypot challenge files created (CRYPTO-02, CRYPTO-03)"
 
+    info "Generating hashed flag files for index.php..."
+    mkdir -p /etc/ctf
+    
+    python3 << 'EOF_PYTHON'
+import hashlib
+
+def h(s): return hashlib.sha256(s.encode()).hexdigest()
+
+t1_flags = [
+    'FLAG{t1_steg0_lsb_pixel_hunter_x7k}',
+    'FLAG{t1_dtmf_audio_decode_p3q}',
+    'FLAG{t1_mem_dump_analyst_r4m}',
+    'FLAG{t1_deleted_but_not_gone_77j}',
+    'FLAG{t1_xor_key_is_the_way_m2n}',
+    'FLAG{t1_vigenere_cracked_4you}',
+    'FLAG{t1_cr0n_h1dden_sch3dul3r}',
+    'FLAG{t1_ex1f_metadata_l34k}',
+    'FLAG{t1_su1d_find_privesc_9z2}',
+]
+
+all_real = [
+    'FLAG{web_03_jwt_secret_leak_q2w8}',
+    *t1_flags,
+    'FLAG{web_01_polyglot_upload_bypass_k8m3}',
+    'FLAG{web_02_imagetragick_rce_p9n7}',
+    'FLAG{crypto_01_multi_layer_decrypt_n9k4}',
+    'FLAG{t2_c4p_d4c_r34d_4bus3_x7k}',
+    'FLAG{t2_bash_history_aes_d3crypt3d_k7x}',
+    'FLAG{t2_mysql_dump_3xtr4ct_j9w}',
+    'FLAG{t2_j0urn4l_b1n4ry_p4rs3_m2v}',
+    'FLAG{t2_dm3sg_k3rn3l_fr4g_p8n}',
+    'FLAG{t2_r3v3rs3_v4l1d4t0r_q5z}',
+    'FLAG{t2_ssh_k3y_4ss3mbl3d_e2r}',
+    'FLAG{t3_fmt_str_0v3rwr1t3_y5v}',
+    'FLAG{t3_h34p_tc4ch3_p01s0n1ng_n9k4}',
+    'FLAG{t3_10g_4n4ly515_4n0m4ly_x7k}',
+    'FLAG{t3_p0rt_kn0ck1ng_s3qu3nc3_v2b}',
+    'FLAG{t3_k3rn3l_m0dul3_10ctl_pwn_b8w}',
+    'FLAG{t4_f1n4l_r00t_d3crypt10n_m4st3r}',
+    'FLAG{RWT_CTF_M4ST3RM1ND_C0MPL3T3_9X2}',
+]
+
+honeypots = [
+    'FLAG{t0_robots_txt_trap_n1c3}',
+    'FLAG{t0_dotenv_exposed_g0tcha}',
+    'FLAG{t0_sql_dump_fake_fl4g}',
+    'FLAG{t0_admin_notes_d3coy}',
+    'FLAG{t0_config_bak_tr4p}',
+    'FLAG{too_easy_try_harder}',
+    'FLAG{nice_try_keep_looking}',
+    'FLAG{t1_backup_found_nope}',
+    'FLAG{t1_creds_too_obvious}',
+    'FLAG{t1_pem_not_real_key}',
+    'FLAG{t1_rsa_small_e_gotcha}',
+    'FLAG{t1_log_grep_too_easy}',
+    'FLAG{t1_sudo_trap_gotcha}',
+    'FLAG{t2_eng_pass_tr4p}',
+    'FLAG{t2_s3cret_key_f4ke}',
+    'FLAG{t2_db_backup_n0pe}',
+    'FLAG{t2_ssh_key_l0l}',
+    'FLAG{t2_config_d3c0y}',
+    'FLAG{t2_h1story_tr4p}',
+    'FLAG{t2_n0tes_g0tcha}',
+    'FLAG{t3_hp_ssh_key_h1dd3n_m4k}',
+    'FLAG{t3_hp_l0gs_gr3p_f00l}',
+    'FLAG{t3_hp_db_dump_j4g}',
+    'FLAG{t3_hp_zip_cr4ck_d0y}',
+    'FLAG{t3_hp_h1dd3n_txt_p2s}',
+    'FLAG{t4_hp_ssh_z1p_f4k3_c9k}',
+    'FLAG{t4_hp_b4sh_h1st_curl_x2a}',
+]
+
+with open('/etc/ctf/flags.php', 'w') as f:
+    f.write('<?php\n$T1_FLAGS_HASHES = [\n')
+    for flag in t1_flags:
+        f.write('    \'' + h(flag) + '\',\n')
+    f.write('];\n\n$ALL_REAL_HASHES = [\n')
+    for flag in all_real:
+        f.write('    \'' + h(flag) + '\',\n')
+    f.write('];\n')
+
+with open('/etc/ctf/honeypots.php', 'w') as f:
+    f.write('<?php\n$HONEYPOTS_HASHES = [\n')
+    for flag in honeypots:
+        f.write('    \'' + h(flag) + '\' => \'' + flag + '\',\n')
+    f.write('];\n')
+EOF_PYTHON
+
+    # Set permissions so PHP (nginx group) can read them
+    # Note: User requested root:root 600, but index.php requires read access
+    # So we use root:nginx 640 which prevents web-shells (e.g. web01/web02 users) from reading it
+    # while allowing the front-end PHP to verify flags.
+    chown root:nginx /etc/ctf/*.php
+    chmod 640 /etc/ctf/*.php
+    log "Generated /etc/ctf/flags.php and /etc/ctf/honeypots.php"
+
     # ── Deploy index.php flag gate ─────────────────────────────────────
     info "Deploying T0→T1 flag gate..."
 
@@ -691,7 +787,9 @@ A graveyard of deleted tales. Carve out what was lost.
 EOF
 
     cp "$CTF/T1-Crypto/crypto-04/xor_cipher.bin"   /var/www/html/files/crypto/ 2>/dev/null || warn "Missing: xor_cipher.bin"
-    cp "$CTF/T1-Crypto/crypto-04/note.txt"         /var/www/html/files/crypto/ 2>/dev/null || true # Keeping 10% of hints
+    cat > /var/www/html/files/crypto/note.txt << 'EOF'
+Two faces of the same coin, indistinguishable until they clash. Only when they differ does the truth emerge.
+EOF
     cat > /var/www/html/files/crypto/crypto04_README.txt << 'EOF'
 Two paths converge to reveal the truth. Exclusive but not exclusionary.
 EOF
@@ -707,7 +805,13 @@ EOF
     cp "$CTF/T1-Honeypots/secret_key.pem"  /var/www/html/files/misc/ 2>/dev/null || warn "Missing: secret_key.pem"
 
     cp "$CTF/T2-Forensics/forensics-03/analyst_db.sql"       /var/www/html/files/forensics/ 2>/dev/null || true
+    cat > /var/www/html/files/forensics/forensics03_README.txt << 'EOF'
+An analyst's mind map, structured but chaotic. Follow the foreign keys.
+EOF
     cp "$CTF/T2-Forensics/forensics-05/dmesg.log"            /var/www/html/files/forensics/ 2>/dev/null || true
+    cat > /var/www/html/files/forensics/forensics05_README.txt << 'EOF'
+The kernel speaks in ancient tongues. Listen for the module's dying breath.
+EOF
     cp "$CTF/T2-Crypto/crypto-06/encrypted_bash_history.enc" /var/www/html/files/crypto/   2>/dev/null || true
     cat > /var/www/html/files/crypto/analyst_note.txt << 'EOF'
 Salty tears encrypt the past. History is written with 17 grains.
@@ -717,6 +821,9 @@ EOF
     for f in engineer_password.txt .secret_key database_backup.sql id_rsa_engineer config.enc .bash_history_leak escalation_notes.md; do
         cp "$CTF/T2-Honeypots/$f" /var/www/html/files/misc/ 2>/dev/null || true
     done
+    cat > /var/www/html/files/misc/escalation_notes.md << 'EOF'
+The stairs are broken, but the elevator still runs. Find the switch.
+EOF
     for f in .bash_history sudoers.bak id_rsa.pub docker-compose.yml passwords.kdbx.export; do
         cp "$CTF/T3-Honeypots/$f" /var/www/html/files/misc/ 2>/dev/null || true
     done

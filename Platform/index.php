@@ -2,72 +2,14 @@
 session_start();
 
 // ── T0: WEB-03 flag unlocks T1 ───────────────────────────────────────────
-define('T0_UNLOCK_FLAG', 'FLAG{web_03_jwt_secret_leak_q2w8}');
+define('T0_UNLOCK_FLAG_HASH', '13af1e51e4e6876392f3eeb4a0f0eb30681ce398804ef0e1ab805a1e26286006');
 
-// ── T1: ALL must be submitted to unlock T2 ───────────────────────────────
-$T1_FLAGS = [
-    'FLAG{t1_steg0_lsb_pixel_hunter_x7k}',
-    'FLAG{t1_dtmf_audio_decode_p3q}',
-    'FLAG{t1_mem_dump_analyst_r4m}',
-    'FLAG{t1_deleted_but_not_gone_77j}',
-    'FLAG{t1_xor_key_is_the_way_m2n}',
-    'FLAG{t1_vigenere_cracked_4you}',
-    'FLAG{t1_cr0n_h1dden_sch3dul3r}',
-    'FLAG{t1_ex1f_metadata_l34k}',
-    'FLAG{t1_su1d_find_privesc_9z2}',
-];
-
-// ── All 27 honeypot flags ─────────────────────────────────────────────────
-$HONEYPOTS = [
-    'FLAG{t0_robots_txt_trap_n1c3}',
-    'FLAG{t0_dotenv_exposed_g0tcha}',
-    'FLAG{t0_sql_dump_fake_fl4g}',
-    'FLAG{t0_admin_notes_d3coy}',
-    'FLAG{t0_config_bak_tr4p}',
-    'FLAG{too_easy_try_harder}',
-    'FLAG{nice_try_keep_looking}',
-    'FLAG{t1_backup_found_nope}',
-    'FLAG{t1_creds_too_obvious}',
-    'FLAG{t1_pem_not_real_key}',
-    'FLAG{t1_rsa_small_e_gotcha}',
-    'FLAG{t1_log_grep_too_easy}',
-    'FLAG{t1_sudo_trap_gotcha}',
-    'FLAG{t2_eng_pass_tr4p}',
-    'FLAG{t2_s3cret_key_f4ke}',
-    'FLAG{t2_db_backup_n0pe}',
-    'FLAG{t2_ssh_key_l0l}',
-    'FLAG{t2_config_d3c0y}',
-    'FLAG{t2_h1story_tr4p}',
-    'FLAG{t2_n0tes_g0tcha}',
-    'FLAG{t3_hp_ssh_key_h1dd3n_m4k}',
-    'FLAG{t3_hp_l0gs_gr3p_f00l}',
-    'FLAG{t3_hp_db_dump_j4g}',
-    'FLAG{t3_hp_zip_cr4ck_d0y}',
-    'FLAG{t3_hp_h1dd3n_txt_p2s}',
-    'FLAG{t4_hp_ssh_z1p_f4k3_c9k}',
-    'FLAG{t4_hp_b4sh_h1st_curl_x2a}',
-];
-
-// ── All real flags (for direction feedback only) ──────────────────────────
-$ALL_REAL = array_merge([$T0_UNLOCK_FLAG], $T1_FLAGS, [
-    'FLAG{web_01_polyglot_upload_bypass_k8m3}',
-    'FLAG{web_02_imagetragick_rce_p9n7}',
-    'FLAG{crypto_01_multi_layer_decrypt_n9k4}',
-    'FLAG{t2_c4p_d4c_r34d_4bus3_x7k}',
-    'FLAG{t2_bash_history_aes_d3crypt3d_k7x}',
-    'FLAG{t2_mysql_dump_3xtr4ct_j9w}',
-    'FLAG{t2_j0urn4l_b1n4ry_p4rs3_m2v}',
-    'FLAG{t2_dm3sg_k3rn3l_fr4g_p8n}',
-    'FLAG{t2_r3v3rs3_v4l1d4t0r_q5z}',
-    'FLAG{t2_ssh_k3y_4ss3mbl3d_e2r}',
-    'FLAG{t3_fmt_str_0v3rwr1t3_y5v}',
-    'FLAG{t3_h34p_tc4ch3_p01s0n1ng_n9k4}',
-    'FLAG{t3_10g_4n4ly515_4n0m4ly_x7k}',
-    'FLAG{t3_p0rt_kn0ck1ng_s3qu3nc3_v2b}',
-    'FLAG{t3_k3rn3l_m0dul3_10ctl_pwn_b8w}',
-    'FLAG{t4_f1n4l_r00t_d3crypt10n_m4st3r}',
-    'FLAG{RWT_CTF_M4ST3RM1ND_C0MPL3T3_9X2}',
-]);
+// ── Load secret hashes ───────────────────────────────────────────────────
+@include('/etc/ctf/flags.php');
+@include('/etc/ctf/honeypots.php');
+if (!isset($T1_FLAGS_HASHES)) $T1_FLAGS_HASHES = [];
+if (!isset($HONEYPOTS_HASHES)) $HONEYPOTS_HASHES = [];
+if (!isset($ALL_REAL_HASHES)) $ALL_REAL_HASHES = [];
 
 // ── Session state ─────────────────────────────────────────────────────────
 if (!isset($_SESSION['t1_submitted'])) $_SESSION['t1_submitted'] = [];
@@ -78,15 +20,16 @@ $msg = ''; $msg_type = '';
 // ── Handle submission ─────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $flag = trim($_POST['flag'] ?? '');
+    $flag_hash = !empty($flag) ? hash('sha256', $flag) : '';
 
-    if (in_array($flag, $HONEYPOTS, true)) {
+    if (isset($HONEYPOTS_HASHES[$flag_hash])) {
         $msg      = '⚠ HONEYPOT DETECTED. That flag is fake. This has been logged.';
         $msg_type = 'warn';
         @file_put_contents('/var/log/redteam/honeypot.log',
-            date('Y-m-d H:i:s') . ' HONEYPOT: ' . $flag .
+            date('Y-m-d H:i:s') . ' HONEYPOT: ' . $HONEYPOTS_HASHES[$flag_hash] .
             ' from ' . ($_SERVER['REMOTE_ADDR'] ?? '?') . "\n", FILE_APPEND);
 
-    } elseif ($flag === T0_UNLOCK_FLAG) {
+    } elseif ($flag_hash === T0_UNLOCK_FLAG_HASH) {
         if (!$t1_unlocked) {
             $_SESSION['t1_unlocked'] = true;
             $t1_unlocked = true;
@@ -96,14 +39,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = 'Tier 1 already unlocked.'; $msg_type = 'warn';
         }
 
-    } elseif (in_array($flag, $T1_FLAGS, true)) {
+    } elseif (in_array($flag_hash, $T1_FLAGS_HASHES, true)) {
         if (!$t1_unlocked) {
             $msg = 'Unlock Tier 1 first.'; $msg_type = 'err';
-        } elseif (in_array($flag, $_SESSION['t1_submitted'], true)) {
+        } elseif (in_array($flag_hash, $_SESSION['t1_submitted'], true)) {
             $msg = 'Already submitted. Keep going.'; $msg_type = 'warn';
         } else {
-            $_SESSION['t1_submitted'][] = $flag;
-            $remaining = count($T1_FLAGS) - count($_SESSION['t1_submitted']);
+            $_SESSION['t1_submitted'][] = $flag_hash;
+            $remaining = count($T1_FLAGS_HASHES) - count($_SESSION['t1_submitted']);
             if ($remaining === 0) {
                 $_SESSION['t2_unlocked'] = true;
                 $t2_unlocked = true;
@@ -117,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } elseif (!empty($flag)) {
         if (preg_match('/^FLAG\{[^}]+\}$/', $flag)) {
-            $msg = in_array($flag, $ALL_REAL, true)
+            $msg = in_array($flag_hash, $ALL_REAL_HASHES, true)
                 ? 'Valid flag — but not submitted here. Keep digging.'
                 : 'Not a valid flag.';
             $msg_type = 'warn';
@@ -128,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $t1_done  = count($_SESSION['t1_submitted']);
-$t1_total = count($T1_FLAGS);
+$t1_total = count($T1_FLAGS_HASHES);
 $t1_pct   = $t1_total ? (int)($t1_done / $t1_total * 100) : 0;
 $host     = htmlspecialchars(explode(':', $_SERVER['HTTP_HOST'])[0]);
 ?>

@@ -2,7 +2,7 @@
 
 > **4 Tiers | 50 Challenges | 25 Real + 25 Honeypot | Progressive + Non-Linear**
 
-A multi-tier Capture The Flag competition featuring progressive privilege escalation, real-world attack scenarios, and honeypot traps. Players start with zero access and must hack their way from external attacker to www-data to analyst to engineer to root, collecting 25 flag fragments to assemble the master flag.
+A multi-tier Capture The Flag competition featuring progressive privilege escalation, real-world attack scenarios, and honeypot traps. Players start with zero access and must hack their way from external attacker to www-data to analyst to engineer to root, collecting 5 crucial flag fragments to assemble the master flag.
 
 ---
 
@@ -21,7 +21,7 @@ graph TD
     MAIN --> T4["👑 T4<br/>root Access<br/>4 challenges"]
     MAIN --> PL["🏗️ Platform<br/>Infrastructure"]
 
-    T0 --> T0W["T0-Web<br/>WEB-01 to WEB-03<br/>250-300 pts"]
+    T0 --> T0W["T0-Web<br/>WEB-00 to WEB-03<br/>150-300 pts"]
     T0 --> T0C["T0-Crypto<br/>CRYPTO-01 to CRYPTO-02<br/>200-300 pts"]
     T0 --> T0H["T0-Honeypots<br/>5 decoys"]
 
@@ -71,7 +71,7 @@ graph LR
     B -->|"escalate to analyst"| C["🔍 T2<br/>analyst<br/>14 challenges"]
     C -->|"assemble SSH key"| D["⚙️ T3<br/>engineer<br/>10 challenges"]
     D -->|"kernel exploit / docker escape"| E["👑 T4<br/>root<br/>4 challenges"]
-    E -->|"collect all 25 flags"| F["🏆 MASTER FLAG"]
+    E -->|"collect 5 tier flags"| F["🏆 MASTER FLAG"]
 
     style A fill:#1a1a2e,stroke:#e94560,color:#fff,stroke-width:2px
     style B fill:#16213e,stroke:#0f3460,color:#fff,stroke-width:2px
@@ -88,7 +88,7 @@ graph LR
 | Branch | Tier | Category | Challenges | Points |
 |--------|------|----------|------------|--------|
 | `T0` | 0 | Overview | - | - |
-| `T0-Web` | 0 | Web Exploitation | WEB-01 to WEB-03 | 250-300 |
+| `T0-Web` | 0 | Web Exploitation | WEB-00 to WEB-03 | 150-300 |
 | `T0-Crypto` | 0 | Cryptography | CRYPTO-01 to CRYPTO-02 | 200-300 |
 | `T0-Honeypots` | 0 | Decoys | 5 honeypots | -50 penalty |
 | `T1` | 1 | Overview | - | - |

@@ -512,6 +512,78 @@ setup_t2_crypto() {
 }
 
 ###############################################################################
+# SECTION 11a — T2-FORENSICS
+###############################################################################
+setup_t2_forensics() {
+    local tier_dir="${SCRIPT_DIR}/T2-Forensics"
+
+    if ! should_setup "T2" "FORENSICS"; then skip "T2-Forensics (filtered out)"; return; fi
+    if ! dir_exists "$tier_dir"; then skip "T2-Forensics directory not found"; mark_skip "T2-Forensics"; return; fi
+
+    info "═══ Setting up T2-Forensics ═══"
+    local deploy_dir="${DEPLOY_BASE}/t2/forensics"
+    run_or_dry "mkdir -p '${deploy_dir}'"
+
+    _run_python_challenge "T2-FORENSICS-03" "${tier_dir}/forensics-03/create_forensics03.py" "${tier_dir}/forensics-03" "${deploy_dir}/forensics-03"
+    _run_python_challenge "T2-FORENSICS-04" "${tier_dir}/forensics-04/create_forensics04.py" "${tier_dir}/forensics-04" "${deploy_dir}/forensics-04"
+    _run_python_challenge "T2-FORENSICS-05" "${tier_dir}/forensics-05/create_forensics05.py" "${tier_dir}/forensics-05" "${deploy_dir}/forensics-05"
+
+    _set_deploy_perms "$deploy_dir"
+}
+
+###############################################################################
+# SECTION 11b — T2-REVERSE
+###############################################################################
+setup_t2_reverse() {
+    local tier_dir="${SCRIPT_DIR}/T2-Reverse"
+
+    if ! should_setup "T2" "REVERSE"; then skip "T2-Reverse (filtered out)"; return; fi
+    if ! dir_exists "$tier_dir"; then skip "T2-Reverse directory not found"; mark_skip "T2-Reverse"; return; fi
+
+    info "═══ Setting up T2-Reverse ═══"
+    local deploy_dir="${DEPLOY_BASE}/t2/reverse"
+    run_or_dry "mkdir -p '${deploy_dir}'"
+
+    _run_python_challenge "T2-REVERSE-01" "${tier_dir}/reverse-01/create_reverse01.py" "${tier_dir}/reverse-01" "${deploy_dir}/reverse-01"
+
+    _set_deploy_perms "$deploy_dir"
+}
+
+###############################################################################
+# SECTION 11c — T2-SSHKEYHUNT
+###############################################################################
+setup_t2_sshkeyhunt() {
+    local tier_dir="${SCRIPT_DIR}/T2-SSHKeyHunt"
+
+    if ! should_setup "T2" "SSHKEYHUNT"; then skip "T2-SSHKeyHunt (filtered out)"; return; fi
+    if ! dir_exists "$tier_dir"; then skip "T2-SSHKeyHunt directory not found"; mark_skip "T2-SSHKeyHunt"; return; fi
+
+    info "═══ Setting up T2-SSHKeyHunt ═══"
+    local deploy_dir="${DEPLOY_BASE}/t2/sshkeyhunt"
+    run_or_dry "mkdir -p '${deploy_dir}'"
+
+    _run_python_challenge "T2-SSHKEYHUNT" "${tier_dir}/sshkeyhunt/create_sshkeyhunt.py" "${tier_dir}/sshkeyhunt" "${deploy_dir}/sshkeyhunt"
+
+    _set_deploy_perms "$deploy_dir"
+}
+
+###############################################################################
+# SECTION 11d — T2-HONEYPOTS
+###############################################################################
+setup_t2_honeypots() {
+    local tier_dir="${SCRIPT_DIR}/T2-Honeypots"
+
+    if ! should_setup "T2" "HONEYPOTS"; then skip "T2-Honeypots (filtered out)"; return; fi
+    if ! dir_exists "$tier_dir"; then skip "T2-Honeypots directory not found"; mark_skip "T2-Honeypots"; return; fi
+
+    info "═══ Setting up T2-Honeypots ═══"
+    local deploy_dir="${DEPLOY_BASE}/t2/misc"
+    run_or_dry "mkdir -p '${deploy_dir}'"
+
+    _run_python_challenge "T2-HONEYPOTS" "${tier_dir}/create_honeypots.py" "${tier_dir}" "${deploy_dir}"
+}
+
+###############################################################################
 # SECTION 12 — T3 (ENGINEER DEPLOYMENTS)
 ###############################################################################
 setup_t3() {
@@ -525,7 +597,7 @@ setup_t3() {
     
     local deploy_dir="${DEPLOY_BASE}/t3/misc"
     run_or_dry "mkdir -p '${deploy_dir}'"
-    _run_python_challenge "T3-MISC-05 (Obfuscated Logs)" "${SCRIPT_DIR}/T3-Misc/misc-05/create_misc05.py" "${SCRIPT_DIR}/T3-Misc/misc-05" "${deploy_dir}/misc-05"
+    _run_python_challenge "T3-MISC-04 (Obfuscated Logs)" "${SCRIPT_DIR}/T3-Misc/misc-04/create_misc04.py" "${SCRIPT_DIR}/T3-Misc/misc-04" "${deploy_dir}/misc-04"
     _run_python_challenge "T3-HONEYPOTS" "${SCRIPT_DIR}/T3-Honeypots/create_honeypots.py" "${SCRIPT_DIR}/T3-Honeypots" ""
 }
 
@@ -776,6 +848,10 @@ setup_t1_honeypots
 # ── 4. Tier 2 (explicit) ─────────────────────────────────────────────────────
 setup_t2_binary
 setup_t2_crypto
+setup_t2_forensics
+setup_t2_reverse
+setup_t2_sshkeyhunt
+setup_t2_honeypots
 
 # ── 5. Tier 3 ─────────────────────────────
 setup_t3

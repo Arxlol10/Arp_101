@@ -26,7 +26,7 @@ const CHALLENGES = [
   { name: 'T3-Network-01: Port Knocking',       description: 'Knock, knock, knocking on a closed port door. Find the right rhythm and the service you shall explore.' },
   { name: 'T3-Binary-02: Format String',        description: 'A loose percentage sign, a memory leak unsealed. Redirect the flow and the truth will be revealed.' },
   { name: 'T3-Binary-03: Heap Tcache Poison',   description: 'Cache poisoned, memory twisted and frail. Manipulate the heap to tell your own tale.' },
-  { name: 'T3-Misc-05: Log Anomaly Analysis',   description: 'A needle in a haystack of access lines. Find the odd one out among the designs.' },
+  { name: 'T3-misc-04: Log Anomaly Analysis',   description: 'A needle in a haystack of access lines. Find the odd one out among the designs.' },
   { name: 'T4-Root-01: Block Cipher Decrypt',    description: 'Blocks chained together, secrets tightly bound. Use the gathered fragments where the final truth is found.' },
   { name: 'T4-Root-02: Master Flag Assembly',     description: 'You reached the core, the ultimate quest. Assemble the pieces and pass the grand test.' },
 ];
@@ -48,3 +48,4 @@ async function updateDescriptions() {
 }
 
 updateDescriptions();
+

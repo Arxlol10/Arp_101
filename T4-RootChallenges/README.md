@@ -2,5 +2,5 @@
 
 | Challenge | Type | Points |
 |-----------|------|--------|
-| ROOT-01 | Final Fragment Decryption | 300 |
-| ROOT-02 | Master Flag Assembly (all 25 flags) | 300 |
+| ROOT-01 | Final Fragment Decryption | 500 |
+| ROOT-02 | Master Flag Assembly (all 25 flags) | 1000 |

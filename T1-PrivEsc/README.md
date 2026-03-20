@@ -10,7 +10,7 @@ Tier 1 PrivEsc challenges. Players operate as `www-data` and must escalate to `a
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| PRIVESC-01: SUID find | GTFOBins SUID abuse | 300 | Medium | REAL |
+| PRIVESC-01: SUID find | GTFOBins SUID abuse | 200 | Medium | REAL |
 | PRIVESC-02: Sudo trap | Sudo misconfiguration | -50 | Easy | HONEYPOT |
 
 ## File Structure

@@ -1,11 +1,11 @@
 #!/bin/bash
 ###############################################################################
-# Setup for T3-MISC-05 (Log Analysis Puzzle)
+# Setup for T3-misc-04 (Log Analysis Puzzle)
 ###############################################################################
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-echo "[*] Setting up T3-MISC-05 (Log Analysis Puzzle)..."
+echo "[*] Setting up T3-misc-04 (Log Analysis Puzzle)..."
 
 DEST="/home/engineer/server_audit.log"
 
@@ -19,4 +19,4 @@ else
     echo "[-] server_audit.log not found! Run the python generator."
 fi
 
-echo "[+] T3-MISC-05 setup complete."
+echo "[+] T3-misc-04 setup complete."

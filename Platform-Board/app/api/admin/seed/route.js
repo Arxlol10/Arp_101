@@ -61,7 +61,7 @@ const CHALLENGES = [
   { name: 'T3-Network-01: Port Knocking',       category: 'Network',  flag: process.env.T3_NETWORK_01,   points: 300, tier: 3, is_honeypot: false, difficulty: 'MEDIUM', description: 'Knock, knock, knocking on a closed port door. Find the right rhythm and the service you shall explore.' },
   { name: 'T3-Binary-02: Format String',        category: 'Binary',   flag: process.env.T3_BINARY_02,    points: 300, tier: 3, is_honeypot: false, difficulty: 'HARD', description: 'A loose percentage sign, a memory leak unsealed. Redirect the flow and the truth will be revealed.' },
   { name: 'T3-Binary-03: Heap Tcache Poison',   category: 'Binary',   flag: process.env.T3_BINARY_03,    points: 350, tier: 3, is_honeypot: false, difficulty: 'HARD', description: 'Cache poisoned, memory twisted and frail. Manipulate the heap to tell your own tale.' },
-  { name: 'T3-Misc-05: Log Anomaly Analysis',   category: 'Misc',     flag: process.env.T3_MISC_05,      points: 250, tier: 3, is_honeypot: false, difficulty: 'MEDIUM', description: 'A needle in a haystack of access lines. Find the odd one out among the designs.' },
+  { name: 'T3-misc-04: Log Anomaly Analysis',   category: 'Misc',     flag: process.env.T3_MISC_04,      points: 250, tier: 3, is_honeypot: false, difficulty: 'MEDIUM', description: 'A needle in a haystack of access lines. Find the odd one out among the designs.' },
 
   // ═══ TIER 3 — Honeypots ═══
   { name: 'T3-HP: Bash History',          category: 'Honeypot', flag: process.env.T3_HP_BASH_HIST,    points: 50, tier: 3, is_honeypot: true },
@@ -136,3 +136,4 @@ export async function POST(request) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
+

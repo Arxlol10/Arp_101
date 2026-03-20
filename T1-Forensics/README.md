@@ -6,8 +6,8 @@ Tier 1 Forensics challenges. Players operate as `www-data` and find these files 
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| FORENSICS-01: Memory Dump Analysis | Heap binary grep / strings | 300 | Medium | REAL |
-| FORENSICS-02: Deleted File Recovery | FAT12 disk image carving | 250 | Medium | REAL |
+| FORENSICS-01: Memory Dump Analysis | Heap binary grep / strings | 150 | Medium | REAL |
+| FORENSICS-02: Deleted File Recovery | FAT12 disk image carving | 150 | Medium | REAL |
 
 ## File Structure
 

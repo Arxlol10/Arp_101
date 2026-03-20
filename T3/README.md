@@ -10,11 +10,11 @@ Unlocked after escalating privileges from `analyst` to `engineer` (via Tier 2).
 
 | # | Challenge | Category | Points | Difficulty | Flag |
 |---|-----------|----------|--------|------------|------|
-| 1 | BINARY-02: Format String SUID | Binary | 400 | Hard | `FLAG{t3_fmt_str_0v3rwr1t3_y5v}` |
-| 2 | BINARY-03: Heap Tcache Poisoning | Binary | 500 | Very Hard | `FLAG{t3_h34p_tc4ch3_p01s0n1ng_n9k4}` |
-| 3 | MISC-05: Obfuscated Log Analysis | Misc | 350 | Medium | `FLAG{t3_10g_4n4ly515_4n0m4ly_x7k}` |
-| 4 | NETWORK-01: Port Knocking | Network | 300 | Medium | `FLAG{t3_p0rt_kn0ck1ng_s3qu3nc3_v2b}` |
-| 5 | PRIVESC-03: Kernel Module Exploitation | PrivEsc | 500 | Very Hard | `FLAG{t3_k3rn3l_m0dul3_10ctl_pwn_b8w}` |
+| 300 | BINARY-02: Format String SUID | Binary | 300 | Hard | `FLAG{t3_fmt_str_0v3rwr1t3_y5v}` |
+| 350 | BINARY-03: Heap Tcache Poisoning | Binary | 350 | Very Hard | `FLAG{t3_h34p_tc4ch3_p01s0n1ng_n9k4}` |
+| 250 | misc-04: Obfuscated Log Analysis | Misc | 250 | Medium | `FLAG{t3_10g_4n4ly515_4n0m4ly_x7k}` |
+| 300 | NETWORK-01: Port Knocking | Network | 300 | Medium | `FLAG{t3_p0rt_kn0ck1ng_s3qu3nc3_v2b}` |
+| 300 | PRIVESC-03: Kernel Module Exploitation | PrivEsc | 300 | Very Hard | `FLAG{t3_k3rn3l_m0dul3_10ctl_pwn_b8w}` |
 
 **Total real points available:** 2,050
 
@@ -44,7 +44,7 @@ T3-Honeypots/    — 5 decoy files simulating engineer post-exploitation
 
 ```bash
 # Generate file artifacts:
-cd T3-Misc/misc-05 && python3 create_misc05.py
+cd T3-Misc/misc-04 && python3 create_misc04.py
 cd T3-Honeypots    && python3 create_honeypots.py
 
 # Server-side setup (MUST run as root on the target VM):
@@ -53,3 +53,4 @@ bash T3-Binary/binary-03/setup_binary03.sh
 bash T3-Network/network-01/setup_network01.sh
 bash T3-PrivEsc/privesc-03/setup_privesc03.sh
 ```
+

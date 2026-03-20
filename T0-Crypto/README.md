@@ -6,7 +6,7 @@ Tier 0 Cryptography challenges for the Red Team CTF.
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| CRYPTO-01: Multi-Layer | 3-Layer Decrypt (AES→Base85→ROT47) | 300 | Medium | REAL |
+| CRYPTO-01: Multi-Layer | 3-Layer Decrypt (AES→Base85→ROT47) | 100 | Medium | REAL |
 | CRYPTO-02: Caesar | ROT13 | -100 | Easy | HONEYPOT |
 | CRYPTO-03: Hash Crack | MD5 → AES | -100 | Easy | HONEYPOT |
 

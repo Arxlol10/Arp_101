@@ -1,12 +1,10 @@
 <?php
 session_start();
 
-// ── T0: WEB-03 flag unlocks T1 ───────────────────────────────────────────
-define('T0_UNLOCK_FLAG_HASH', '13af1e51e4e6876392f3eeb4a0f0eb30681ce398804ef0e1ab805a1e26286006');
-
 // ── Load secret hashes ───────────────────────────────────────────────────
 @include('/etc/ctf/flags.php');
 @include('/etc/ctf/honeypots.php');
+if (!isset($T0_FLAGS_HASHES)) $T0_FLAGS_HASHES = [];
 if (!isset($T1_FLAGS_HASHES)) $T1_FLAGS_HASHES = [];
 if (!isset($HONEYPOTS_HASHES)) $HONEYPOTS_HASHES = [];
 if (!isset($ALL_REAL_HASHES)) $ALL_REAL_HASHES = [];
@@ -29,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             date('Y-m-d H:i:s') . ' HONEYPOT: ' . $HONEYPOTS_HASHES[$flag_hash] .
             ' from ' . ($_SERVER['REMOTE_ADDR'] ?? '?') . "\n", FILE_APPEND);
 
-    } elseif ($flag_hash === T0_UNLOCK_FLAG_HASH) {
+    } elseif (in_array($flag_hash, $T0_FLAGS_HASHES, true)) {
         if (!$t1_unlocked) {
             $_SESSION['t1_unlocked'] = true;
             $t1_unlocked = true;
@@ -80,7 +78,7 @@ $host     = htmlspecialchars(explode(':', $_SERVER['HTTP_HOST'])[0]);
 <head>
 <meta charset="utf-8">
 <title>NexusCorp — CTF</title>
-<!-- Internal recon note: asset inventory at /internal/admin_notes.md -->
+<!-- WARNING [Incident Response]: /internal/admin_notes.md was flagged as modified by an unknown actor. Treat contents with extreme caution. -->
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#0a0e14;color:#c5d0e0;font-family:'Courier New',monospace;font-size:14px;padding:32px 20px}
@@ -162,6 +160,9 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
     </div>
   </form>
   <p class="note">⚠ Fake flags are planted throughout the system. Submitting one will be logged and costs −50 pts.</p>
+  <p class="note" style="color:#5eb8ff; margin-top:8px;">
+    ℹ <b>Notice:</b> Submitting flags here only unlocks tier files locally. For permanent points and team ranking, you <b>must</b> submit your flags to the official CTF Platform Board.
+  </p>
 </div>
 
 <!-- ── KNOWN ASSETS (honeypot bait + real recon finds) ───────────────────
@@ -265,6 +266,8 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
     <?php endif; ?>
     <div class="file-grid">
       <?php foreach ([
+        ['MISC-01: crontab_export.txt', 'misc/crontab_export.txt'],
+        ['MISC-02: workstation_screenshot.jpg', 'misc/workstation_screenshot.jpg'],
         ['STEGO-01: suspicious.png',   'stego/suspicious.png'],
         ['STEGO-01: README',           'stego/stego01_README.txt'],
         ['STEGO-02: transmission.wav', 'stego/transmission.wav'],
@@ -317,6 +320,7 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
         ['CRYPTO-06: encrypted bash history', 'crypto/encrypted_bash_history.enc'],
         ['CRYPTO-06: analyst note',           'crypto/analyst_note.txt'],
         ['FORENSICS-03: analyst_db.sql',      'forensics/analyst_db.sql'],
+        ['FORENSICS-04: system.journal',      'forensics/system.journal'],
         ['FORENSICS-05: dmesg.log',           'forensics/dmesg.log'],
         ['REVERSE-01: license_validator.py',  'misc/license_validator.py'],
       ] as [$label, $path]):

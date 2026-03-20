@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # =============================================================================
-# MISC-05 Generator: Huge obfuscated log file
+# misc-04 Generator: Huge obfuscated log file
 # The flag is split across base64 encoded strings in anomalous log entries
 # =============================================================================
 
@@ -59,7 +59,7 @@ def generate_logs():
                 f.write(f"{ts} srv-prod-01 {comp}[{random.randint(100, 9999)}]: {msg}\n")
                 
     # Create README
-    readme = """MISC-05: Log Analysis
+    readme = """misc-04: Log Analysis
 Points: 350
 Difficulty: Medium
 
@@ -73,7 +73,7 @@ Files:
     with open(os.path.join(script_dir, "README.txt"), "w", encoding='utf-8') as f:
         f.write(readme)
         
-    print(f"[+] MISC-05 Generator: Created server_app.log (10000 lines)")
+    print(f"[+] misc-04 Generator: Created server_app.log (10000 lines)")
     print(f"[+] Flag injected: {FLAG}")
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-MISC-05: Log Analysis
+misc-04: Log Analysis
 Points: 350
 Difficulty: Medium
 

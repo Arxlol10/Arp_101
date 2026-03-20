@@ -4,4 +4,4 @@ Privilege escalation challenges for Tier 3.
 
 | Challenge | Type | Points |
 |-----------|------|--------|
-| PRIVESC-03 | Kernel Module Exploitation | 500 |
+| PRIVESC-03 | Kernel Module Exploitation | 300 |

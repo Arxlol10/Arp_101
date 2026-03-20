@@ -6,7 +6,7 @@ Tier 2 Cryptography challenges. Players operate as `analyst`.
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| CRYPTO-06: Encrypted Bash History | AES-128-CBC encrypted .bash_history | 300 | Medium | REAL |
+| CRYPTO-06: Encrypted Bash History | AES-128-CBC encrypted .bash_history | 250 | Medium | REAL |
 
 ## File Structure
 

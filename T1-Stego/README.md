@@ -6,8 +6,8 @@ Tier 1 Steganography challenges. Players operate as `www-data` and find these fi
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| STEGO-01: Hidden in Plain Pixels | LSB Image Steganography (PNG) | 350 | Medium | REAL |
-| STEGO-02: Signal Intercept | DTMF Audio Encoding (WAV) | 200 | Easy-Medium | REAL |
+| STEGO-01: Hidden in Plain Pixels | LSB Image Steganography (PNG) | 150 | Medium | REAL |
+| STEGO-02: Signal Intercept | DTMF Audio Encoding (WAV) | 150 | Easy-Medium | REAL |
 
 ## File Structure
 

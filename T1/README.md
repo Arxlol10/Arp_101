@@ -12,15 +12,15 @@ Unlocked after gaining `www-data` access via Tier 0.
 
 | ID | Category | Challenge | Points | Type |
 |----|----------|-----------|--------|------|
-| STEGO-01 | Steganography | Hidden in Plain Pixels (LSB PNG) | 350 | ✅ REAL |
-| STEGO-02 | Steganography | Signal Intercept (DTMF WAV) | 200 | ✅ REAL |
-| FORENSICS-01 | Forensics | Memory Dump Analysis | 300 | ✅ REAL |
-| FORENSICS-02 | Forensics | Deleted File Recovery (FAT12) | 250 | ✅ REAL |
-| CRYPTO-04 | Cryptography | XOR Cipher (repeating key) | 200 | ✅ REAL |
-| CRYPTO-05 | Cryptography | Vigenère Cipher | 250 | ✅ REAL |
-| MISC-01 | Misc | Cron Job Analysis | 200 | ✅ REAL |
-| MISC-02 | Misc | EXIF Metadata Leak | 200 | ✅ REAL |
-| PRIVESC-01 | PrivEsc | SUID find → analyst shell | 300 | ✅ REAL |
+| STEGO-01 | Steganography | Hidden in Plain Pixels (LSB PNG) | 150 | ✅ REAL |
+| STEGO-02 | Steganography | Signal Intercept (DTMF WAV) | 150 | ✅ REAL |
+| FORENSICS-01 | Forensics | Memory Dump Analysis | 150 | ✅ REAL |
+| FORENSICS-02 | Forensics | Deleted File Recovery (FAT12) | 150 | ✅ REAL |
+| CRYPTO-04 | Cryptography | XOR Cipher (repeating key) | 150 | ✅ REAL |
+| CRYPTO-05 | Cryptography | Vigenère Cipher | 150 | ✅ REAL |
+| MISC-01 | Misc | Cron Job Analysis | 150 | ✅ REAL |
+| MISC-02 | Misc | EXIF Metadata Leak | 150 | ✅ REAL |
+| PRIVESC-01 | PrivEsc | SUID find → analyst shell | 200 | ✅ REAL |
 | CRYPTO-HP01 | Cryptography | RSA Small-e Trap | -50 | ❌ HONEYPOT |
 | MISC-03 | Misc | Log Analysis Trap | -50 | ❌ HONEYPOT |
 | PRIVESC-02 | PrivEsc | Sudo check_system.sh Trap | -50 | ❌ HONEYPOT |

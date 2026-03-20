@@ -10,7 +10,7 @@ Binary exploitation challenges for Tier 2.
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| BINARY-01: Capability Abuse | cap_dac_read_search binary | 350 | Medium-Hard | REAL |
+| BINARY-01: Capability Abuse | cap_dac_read_search binary | 200 | Medium-Hard | REAL |
 
 ## File Structure
 

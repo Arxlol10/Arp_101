@@ -9,9 +9,9 @@ Forensics challenges for Tier 2. Players operate as `analyst`.
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| FORENSICS-03: MySQL Database Extraction | Base64 session blob in SQL dump | 250 | Medium | REAL |
-| FORENSICS-04: Systemd Journal Binary | Binary journal parsing | 300 | Medium-Hard | REAL |
-| FORENSICS-05: Kernel dmesg Fragment | Hex-encoded module parameter | 250 | Medium | REAL |
+| FORENSICS-03: MySQL Database Extraction | Base64 session blob in SQL dump | 200 | Medium | REAL |
+| FORENSICS-04: Systemd Journal Binary | Binary journal parsing | 200 | Medium-Hard | REAL |
+| FORENSICS-05: Kernel dmesg Fragment | Hex-encoded module parameter | 200 | Medium | REAL |
 
 ## File Structure
 

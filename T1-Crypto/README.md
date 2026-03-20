@@ -6,8 +6,8 @@ Tier 1 Cryptography challenges. Players operate as `www-data`.
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| CRYPTO-04: XOR Cipher | Repeating-key XOR | 200 | Easy-Medium | REAL |
-| CRYPTO-05: Vigenère | Polyalphabetic cipher | 250 | Medium | REAL |
+| CRYPTO-04: XOR Cipher | Repeating-key XOR | 150 | Easy-Medium | REAL |
+| CRYPTO-05: Vigenère | Polyalphabetic cipher | 150 | Medium | REAL |
 | CRYPTO-HP01: RSA Trap | RSA small-e (honeypot) | -50 | Easy | HONEYPOT |
 
 ## File Structure

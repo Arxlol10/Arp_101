@@ -9,7 +9,7 @@ Multi-part challenge to assemble the engineer SSH key. Players operate as `analy
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| SSHKeyHunt | Multi-part key assembly | 400 | Hard | REAL |
+| SSHKeyHunt | Multi-part key assembly | 200 | Hard | REAL |
 
 ## Parts
 

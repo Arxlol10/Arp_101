@@ -25,28 +25,28 @@ graph TD
     T0 --> T0C["T0-Crypto<br/>CRYPTO-01 to CRYPTO-02<br/>200-300 pts"]
     T0 --> T0H["T0-Honeypots<br/>5 decoys"]
 
-    T1 --> T1S["T1-Stego<br/>STEGO-01 to STEGO-02<br/>200-350 pts"]
-    T1 --> T1F["T1-Forensics<br/>FORENSICS-01 to FORENSICS-02<br/>250-300 pts"]
-    T1 --> T1C["T1-Crypto<br/>CRYPTO-03 to CRYPTO-05<br/>200-300 pts"]
-    T1 --> T1M["T1-Misc<br/>MISC-01 to MISC-03"]
-    T1 --> T1P["T1-PrivEsc<br/>PRIVESC-01 to PRIVESC-02<br/>300-350 pts"]
-    T1 --> T1H["T1-Honeypots<br/>8 decoys"]
+    T1 --> T1S["T1-Stego<br/>STEGO-01 to STEGO-02<br/>150 pts"]
+    T1 --> T1F["T1-Forensics<br/>FORENSICS-01 to FORENSICS-02<br/>150 pts"]
+    T1 --> T1C["T1-Crypto<br/>CRYPTO-04 to CRYPTO-05<br/>150 pts"]
+    T1 --> T1M["T1-Misc<br/>MISC-01 to MISC-02<br/>150 pts"]
+    T1 --> T1P["T1-PrivEsc<br/>PRIVESC-01<br/>200 pts"]
+    T1 --> T1H["T1-Honeypots<br/>6 decoys"]
 
-    T2 --> T2C["T2-Crypto<br/>CRYPTO-06<br/>300 pts"]
-    T2 --> T2F["T2-Forensics<br/>FORENSICS-03 to FORENSICS-05<br/>250-300 pts"]
-    T2 --> T2R["T2-Reverse<br/>REVERSE-01<br/>400 pts"]
-    T2 --> T2B["T2-Binary<br/>BINARY-01<br/>350 pts"]
-    T2 --> T2SSH["T2-SSHKeyHunt<br/>SSH Key Assembly<br/>400 pts"]
+    T2 --> T2C["T2-Crypto<br/>CRYPTO-06<br/>250 pts"]
+    T2 --> T2F["T2-Forensics<br/>FORENSICS-03 to FORENSICS-05<br/>200 pts"]
+    T2 --> T2R["T2-Reverse<br/>REVERSE-01<br/>200 pts"]
+    T2 --> T2B["T2-Binary<br/>BINARY-01<br/>200 pts"]
+    T2 --> T2SSH["T2-SSHKeyHunt<br/>SSH Key Assembly<br/>200 pts"]
     T2 --> T2H["T2-Honeypots<br/>7 decoys"]
 
-    T3 --> T3B["T3-Binary<br/>BINARY-02 to BINARY-03<br/>400-500 pts"]
+    T3 --> T3B["T3-Binary<br/>BINARY-02 to BINARY-03<br/>300-350 pts"]
     T3 --> T3N["T3-Network<br/>NETWORK-01<br/>300 pts"]
-    T3 --> T3M["T3-Misc<br/>MISC-05<br/>350 pts"]
-    T3 --> T3P["T3-PrivEsc<br/>PRIVESC-03<br/>500 pts"]
-    T3 --> T3H["T3-Honeypots<br/>5 decoys"]
+    T3 --> T3M["T3-Misc<br/>MISC-04<br/>250 pts"]
+    T3 --> T3P["T3-PrivEsc<br/>PRIVESC-03<br/>300 pts"]
+    T3 --> T3H["T3-Honeypots<br/>10 decoys"]
 
-    T4 --> T4R["T4-RootChallenges<br/>ROOT-01 to ROOT-02<br/>300 pts each"]
-    T4 --> T4H["T4-Honeypots<br/>2 decoys"]
+    T4 --> T4R["T4-RootChallenges<br/>ROOT-01 to ROOT-02<br/>500-1000 pts"]
+    T4 --> T4H["T4-Honeypots<br/>4 decoys"]
 
     PL --> PLS["Platform-Scoring<br/>CTFd + Plugins"]
     PL --> PLI["Platform-Infra<br/>VM, Nginx, MySQL, ELK"]
@@ -92,28 +92,28 @@ graph LR
 | `T0-Crypto` | 0 | Cryptography | CRYPTO-01 to CRYPTO-02 | 200-300 |
 | `T0-Honeypots` | 0 | Decoys | 5 honeypots | -50 penalty |
 | `T1` | 1 | Overview | - | - |
-| `T1-Stego` | 1 | Steganography | STEGO-01 to STEGO-02 | 200-350 |
-| `T1-Forensics` | 1 | Digital Forensics | FORENSICS-01 to FORENSICS-02 | 250-300 |
-| `T1-Crypto` | 1 | Cryptography | CRYPTO-03 to CRYPTO-05 | 200-300 |
-| `T1-Misc` | 1 | Miscellaneous | MISC-01 to MISC-03 | - |
-| `T1-PrivEsc` | 1 | Privilege Escalation | PRIVESC-01 to PRIVESC-02 | 300-350 |
-| `T1-Honeypots` | 1 | Decoys | 8 honeypots | -50 penalty |
+| `T1-Stego` | 150 | Steganography | STEGO-01 to STEGO-02 | 150 |
+| `T1-Forensics` | 150 | Digital Forensics | FORENSICS-01 to FORENSICS-02 | 150 |
+| `T1-Crypto` | 150 | Cryptography | CRYPTO-04 to CRYPTO-05 | 150 |
+| `T1-Misc` | 150 | Miscellaneous | MISC-01 to MISC-02 | 150 |
+| `T1-PrivEsc` | 200 | Privilege Escalation | PRIVESC-01 | 200 |
+| `T1-Honeypots` | 1 | Decoys | 6 honeypots | -50 penalty |
 | `T2` | 2 | Overview | - | - |
-| `T2-Crypto` | 2 | Cryptography | CRYPTO-06 | 300 |
-| `T2-Forensics` | 2 | Digital Forensics | FORENSICS-03 to FORENSICS-05 | 250-300 |
-| `T2-Reverse` | 2 | Reverse Engineering | REVERSE-01 | 400 |
-| `T2-Binary` | 2 | Binary Exploitation | BINARY-01 | 350 |
-| `T2-SSHKeyHunt` | 2 | SSH Key Assembly | Multi-part | 400 |
+| `T2-Crypto` | 250 | Cryptography | CRYPTO-06 | 250 |
+| `T2-Forensics` | 200 | Digital Forensics | FORENSICS-03 to FORENSICS-05 | 200 |
+| `T2-Reverse` | 200 | Reverse Engineering | REVERSE-01 | 200 |
+| `T2-Binary` | 200 | Binary Exploitation | BINARY-01 | 200 |
+| `T2-SSHKeyHunt` | 2 | SSH Key Assembly | Multi-part | 200 |
 | `T2-Honeypots` | 2 | Decoys | 7 honeypots | -50 penalty |
 | `T3` | 3 | Overview | - | - |
-| `T3-Binary` | 3 | Binary Exploitation | BINARY-02 to BINARY-03 | 400-500 |
-| `T3-Network` | 3 | Network | NETWORK-01 | 300 |
-| `T3-Misc` | 3 | Miscellaneous | MISC-05 | 350 |
-| `T3-PrivEsc` | 3 | Privilege Escalation | PRIVESC-03 | 500 |
-| `T3-Honeypots` | 3 | Decoys | 5 honeypots | -50 penalty |
+| `T3-Binary` | 3 | Binary Exploitation | BINARY-02 to BINARY-03 | 300-350 |
+| `T3-Network` | 300 | Network | NETWORK-01 | 300 |
+| `T3-Misc` | 250 | Miscellaneous | MISC-04 | 250 |
+| `T3-PrivEsc` | 300 | Privilege Escalation | PRIVESC-03 | 300 |
+| `T3-Honeypots` | 3 | Decoys | 10 honeypots | -50 penalty |
 | `T4` | 4 | Overview | - | - |
-| `T4-RootChallenges` | 4 | Root / Final | ROOT-01 to ROOT-02 | 300 |
-| `T4-Honeypots` | 4 | Decoys | 2 honeypots | -50 penalty |
+| `T4-RootChallenges` | 4 | Root / Final | ROOT-01 to ROOT-02 | 500-1000 |
+| `T4-Honeypots` | 4 | Decoys | 4 honeypots | -50 penalty |
 | `Platform` | - | Platform Overview | - | - |
 | `Platform-Scoring` | - | Scoring System | CTFd config | - |
 | `Platform-Infra` | - | Infrastructure | VM, Nginx, ELK | - |
@@ -130,7 +130,7 @@ graph LR
 | First blood | +10% bonus |
 | Honeypot penalty | -50 pts per fake flag |
 | Hint usage | -25% of challenge points |
-| **Max possible** | **8,500 pts** |
+| **Max possible** | **6,400 base pts (excluding bonuses)** |
 
 ---
 

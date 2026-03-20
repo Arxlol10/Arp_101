@@ -9,7 +9,7 @@ Reverse engineering challenges for Tier 2. Players operate as `analyst`.
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| REVERSE-01: License Validator | XOR-based key validation | 400 | Hard | REAL |
+| REVERSE-01: License Validator | XOR-based key validation | 200 | Hard | REAL |
 
 ## File Structure
 

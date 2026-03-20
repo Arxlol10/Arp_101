@@ -8,10 +8,10 @@ def solve():
     log_file = os.path.join(script_dir, "server_app.log")
     
     if not os.path.exists(log_file):
-        print(f"[-] {log_file} not found. Run create_misc05.py first.")
+        print(f"[-] {log_file} not found. Run create_misc04.py first.")
         return
         
-    print("[*] Parsing MISC-05 logs...")
+    print("[*] Parsing misc-04 logs...")
     
     flag = ""
     with open(log_file, "r") as f:

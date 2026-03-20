@@ -8,9 +8,9 @@
 
 | # | Challenge | Vulnerability | Points | Difficulty |
 |---|-----------|--------------|--------|------------|
-| WEB-01 | **Polyglot File Upload** | `.pht` extension bypass + predictable upload path | 250 | Medium |
-| WEB-02 | **ImageTragick RCE** | CVE-2016-3714 — ImageMagick delegate command injection | 300 | Medium |
-| WEB-03 | **JWT Secret Leak** | Obfuscated JS leaks JWT signing secret → admin token forgery | 300 | Medium |
+| WEB-01 | **Polyglot File Upload** | `.pht` extension bypass + predictable upload path | 100 | Medium |
+| WEB-02 | **ImageTragick RCE** | CVE-2016-3714 — ImageMagick delegate command injection | 100 | Medium |
+| WEB-03 | **JWT Secret Leak** | Obfuscated JS leaks JWT signing secret → admin token forgery | 100 | Medium |
 
 ---
 

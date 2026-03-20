@@ -10,8 +10,8 @@ Unlocked after gaining root (via Tier 3 Kernel Exploit, Format String, or Heap O
 
 | # | Challenge | Category | Points | Difficulty | Flag |
 |---|-----------|----------|--------|------------|------|
-| 1 | ROOT-01: Final Decryption Fragment | Crypto/Reverse | 300 | Hard | `FLAG{t4_f1n4l_r00t_d3crypt10n_m4st3r}` |
-| 2 | ROOT-02: Master Flag Assembly | Meta | 1000 | Very Hard | `FLAG{RWT_CTF_M4ST3RM1ND_C0MPL3T3_9X2}` |
+| 500 | ROOT-01: Final Decryption Fragment | Crypto/Reverse | 500 | Hard | `FLAG{t4_f1n4l_r00t_d3crypt10n_m4st3r}` |
+| 1000 | ROOT-02: Master Flag Assembly | Meta | 1000 | Very Hard | `FLAG{RWT_CTF_M4ST3RM1ND_C0MPL3T3_9X2}` |
 
 **Total real points available:** 1,300
 

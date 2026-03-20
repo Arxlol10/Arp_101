@@ -6,8 +6,8 @@ Tier 1 Miscellaneous challenges. Players operate as `www-data`.
 
 | Challenge | Type | Points | Difficulty | Status |
 |-----------|------|--------|------------|--------|
-| MISC-01: Cron Job Analysis | Hidden flag in crontab arguments | 200 | Easy | REAL |
-| MISC-02: EXIF Metadata Leak | Flag in JPEG UserComment EXIF | 200 | Easy | REAL |
+| MISC-01: Cron Job Analysis | Hidden flag in crontab arguments | 150 | Easy | REAL |
+| MISC-02: EXIF Metadata Leak | Flag in JPEG UserComment EXIF | 150 | Easy | REAL |
 | MISC-03: Log Analysis | Decoy base64 token in access log | -50 | Easy | HONEYPOT |
 
 ## File Structure

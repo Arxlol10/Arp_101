@@ -618,6 +618,14 @@ import hashlib
 
 def h(s): return hashlib.sha256(s.encode()).hexdigest()
 
+t0_flags = [
+    'FLAG{web_01_polyglot_upload_bypass_k8m3}',
+    'FLAG{web_02_imagetragick_rce_p9n7}',
+    'FLAG{web_03_jwt_secret_leak_q2w8}',
+    'FLAG{crypto_01_multi_layer_decrypt_n9k4}',
+    'FLAG{web_siem_lfi_logs_exposed_n9p1}',
+]
+
 t1_flags = [
     'FLAG{t1_steg0_lsb_pixel_hunter_x7k}',
     'FLAG{t1_dtmf_audio_decode_p3q}',
@@ -631,11 +639,8 @@ t1_flags = [
 ]
 
 all_real = [
-    'FLAG{web_03_jwt_secret_leak_q2w8}',
+    *t0_flags,
     *t1_flags,
-    'FLAG{web_01_polyglot_upload_bypass_k8m3}',
-    'FLAG{web_02_imagetragick_rce_p9n7}',
-    'FLAG{crypto_01_multi_layer_decrypt_n9k4}',
     'FLAG{t2_c4p_d4c_r34d_4bus3_x7k}',
     'FLAG{t2_bash_history_aes_d3crypt3d_k7x}',
     'FLAG{t2_mysql_dump_3xtr4ct_j9w}',
@@ -680,10 +685,15 @@ honeypots = [
     'FLAG{t3_hp_h1dd3n_txt_p2s}',
     'FLAG{t4_hp_ssh_z1p_f4k3_c9k}',
     'FLAG{t4_hp_b4sh_h1st_curl_x2a}',
+    'FLAG{t4_f4k3_r00t_txt_tr4p}',
+    'FLAG{t4_sh4d0w_f4k3_h4sh}',
 ]
 
 with open('/etc/ctf/flags.php', 'w') as f:
-    f.write('<?php\n$T1_FLAGS_HASHES = [\n')
+    f.write('<?php\n$T0_FLAGS_HASHES = [\n')
+    for flag in t0_flags:
+        f.write('    \'' + h(flag) + '\',\n')
+    f.write('];\n\n$T1_FLAGS_HASHES = [\n')
     for flag in t1_flags:
         f.write('    \'' + h(flag) + '\',\n')
     f.write('];\n\n$ALL_REAL_HASHES = [\n')
@@ -807,6 +817,10 @@ EOF
     cp "$CTF/T2-Forensics/forensics-03/analyst_db.sql"       /var/www/html/files/forensics/ 2>/dev/null || true
     cat > /var/www/html/files/forensics/forensics03_README.txt << 'EOF'
 An analyst's mind map, structured but chaotic. Follow the foreign keys.
+EOF
+    cp "$CTF/T2-Forensics/forensics-04/system.journal"       /var/www/html/files/forensics/ 2>/dev/null || true
+    cat > /var/www/html/files/forensics/forensics04_README.txt << 'EOF'
+An electronic diary logging service whispers. Peer into the binary pages.
 EOF
     cp "$CTF/T2-Forensics/forensics-05/dmesg.log"            /var/www/html/files/forensics/ 2>/dev/null || true
     cat > /var/www/html/files/forensics/forensics05_README.txt << 'EOF'

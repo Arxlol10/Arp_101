@@ -1,5 +1,16 @@
 <?php
+session_set_cookie_params([
+    'lifetime' => 0,
+    'path' => '/',
+    'httponly' => true,
+    'samesite' => 'Strict',
+]);
 session_start();
+
+// ── CSRF token ────────────────────────────────────────────────────────────
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
 
 // ── Load secret hashes ───────────────────────────────────────────────────
 @include('/etc/ctf/flags.php');
@@ -17,6 +28,10 @@ $msg = ''; $msg_type = '';
 
 // ── Handle submission ─────────────────────────────────────────────────────
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $csrf = trim($_POST['csrf_token'] ?? '');
+    if (!hash_equals($_SESSION['csrf_token'], $csrf)) {
+        $msg = 'Invalid request (CSRF).'; $msg_type = 'err';
+    } else {
     $flag = trim($_POST['flag'] ?? '');
     $flag_hash = !empty($flag) ? hash('sha256', $flag) : '';
 
@@ -31,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$t1_unlocked) {
             $_SESSION['t1_unlocked'] = true;
             $t1_unlocked = true;
+            session_regenerate_id(true);
             $msg = '✔ Flag accepted. Tier 1 files are now unlocked.';
             $msg_type = 'ok';
         } else {
@@ -48,6 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($remaining === 0) {
                 $_SESSION['t2_unlocked'] = true;
                 $t2_unlocked = true;
+                session_regenerate_id(true);
                 $msg = '✔ All Tier 1 flags submitted. Tier 2 files are now unlocked!';
                 $msg_type = 'ok';
             } else {
@@ -66,6 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $msg = 'Invalid flag format.'; $msg_type = 'err';
         }
     }
+    } // end CSRF check
 }
 
 $t1_done  = count($_SESSION['t1_submitted']);
@@ -154,6 +172,7 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
 <div class="section">
   <h2>Submit Flag</h2>
   <form method="POST" autocomplete="off">
+    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token']) ?>">
     <div class="submit-row">
       <input type="text" name="flag" placeholder="FLAG{...}" spellcheck="false" autofocus>
       <button class="btn" type="submit">Submit</button>
@@ -266,21 +285,23 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
     <?php endif; ?>
     <div class="file-grid">
       <?php foreach ([
-        ['MISC-01: crontab_export.txt', 'misc/crontab_export.txt'],
-        ['MISC-02: workstation_screenshot.jpg', 'misc/workstation_screenshot.jpg'],
+        ['MISC-01: crontab_export.txt',      'misc/crontab_export.txt'],
+        ['MISC-01: README (riddle)',          'misc/misc01_README.txt'],
+        ['MISC-02: workstation_screenshot.jpg','misc/workstation_screenshot.jpg'],
+        ['MISC-02: README (riddle)',          'misc/misc02_README.txt'],
         ['STEGO-01: suspicious.png',   'stego/suspicious.png'],
-        ['STEGO-01: README',           'stego/stego01_README.txt'],
+        ['STEGO-01: README (riddle)',   'stego/stego01_README.txt'],
         ['STEGO-02: transmission.wav', 'stego/transmission.wav'],
-        ['STEGO-02: hint.txt',         'stego/stego02_hint.txt'],
+        ['STEGO-02: hint (riddle)',     'stego/stego02_hint.txt'],
         ['FORENSICS-01: memory.dmp',   'forensics/memory.dmp'],
-        ['FORENSICS-01: README',       'forensics/forensics01_README.txt'],
+        ['FORENSICS-01: README (riddle)','forensics/forensics01_README.txt'],
         ['FORENSICS-02: disk.img',     'forensics/disk.img'],
-        ['FORENSICS-02: README',       'forensics/forensics02_README.txt'],
+        ['FORENSICS-02: README (riddle)','forensics/forensics02_README.txt'],
         ['CRYPTO-04: xor_cipher.bin',  'crypto/xor_cipher.bin'],
-        ['CRYPTO-04: note.txt',        'crypto/note.txt'],
-        ['CRYPTO-04: README',          'crypto/crypto04_README.txt'],
+        ['CRYPTO-04: note (riddle)',    'crypto/note.txt'],
+        ['CRYPTO-04: README (riddle)',  'crypto/crypto04_README.txt'],
         ['CRYPTO-05: vigenere.txt',    'crypto/vigenere.txt'],
-        ['CRYPTO-05: README',          'crypto/crypto05_README.txt'],
+        ['CRYPTO-05: README (riddle)',  'crypto/crypto05_README.txt'],
       ] as [$label, $path]):
         $exists = file_exists('/var/www/html/files/' . $path); ?>
         <div class="file-item">
@@ -292,6 +313,14 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
           <?php endif; ?>
         </div>
       <?php endforeach; ?>
+    </div>
+    <!-- PRIVESC-01: server-side challenge (no download) -->
+    <div style="margin-top:14px;background:#0d1520;border:1px solid #2e3e52;border-radius:3px;padding:14px">
+      <h3 style="font-size:13px;color:#cdd8e8;margin-bottom:6px">PRIVESC-01: Server-Side Challenge</h3>
+      <p style="font-size:12px;color:#7a8fa0;line-height:1.5">
+        "What commands bow to the wrong master? Seek the ones marked with a golden crown."
+        <br><span style="color:#556677;font-size:11px">This is a live challenge on the server. No download required — enumerate the box.</span>
+      </p>
     </div>
   <?php else: ?>
     <div class="lock-box">
@@ -318,10 +347,13 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
     <div class="file-grid">
       <?php foreach ([
         ['CRYPTO-06: encrypted bash history', 'crypto/encrypted_bash_history.enc'],
-        ['CRYPTO-06: analyst note',           'crypto/analyst_note.txt'],
+        ['CRYPTO-06: analyst note (riddle)',  'crypto/analyst_note.txt'],
         ['FORENSICS-03: analyst_db.sql',      'forensics/analyst_db.sql'],
+        ['FORENSICS-03: README (riddle)',      'forensics/forensics03_README.txt'],
         ['FORENSICS-04: system.journal',      'forensics/system.journal'],
+        ['FORENSICS-04: README (riddle)',      'forensics/forensics04_README.txt'],
         ['FORENSICS-05: dmesg.log',           'forensics/dmesg.log'],
+        ['FORENSICS-05: README (riddle)',      'forensics/forensics05_README.txt'],
         ['REVERSE-01: license_validator.py',  'misc/license_validator.py'],
       ] as [$label, $path]):
         $exists = file_exists('/var/www/html/files/' . $path); ?>
@@ -334,6 +366,21 @@ h1{color:#5eb8ff;font-size:18px;letter-spacing:3px;margin-bottom:4px}
           <?php endif; ?>
         </div>
       <?php endforeach; ?>
+    </div>
+    <!-- Server-side T2 challenges (no download) -->
+    <div style="margin-top:14px;background:#0d1520;border:1px solid #2e3e52;border-radius:3px;padding:14px">
+      <h3 style="font-size:13px;color:#cdd8e8;margin-bottom:6px">SSHKEYHUNT: Server-Side Challenge</h3>
+      <p style="font-size:12px;color:#7a8fa0;line-height:1.5">
+        "Fragments of identity lie scattered across the system — in old projects, encrypted vaults, forgotten databases, and a historian's diary. Assemble the pieces to forge the key."
+        <br><span style="color:#556677;font-size:11px">No download. Explore the server's filesystem.</span>
+      </p>
+    </div>
+    <div style="margin-top:10px;background:#0d1520;border:1px solid #2e3e52;border-radius:3px;padding:14px">
+      <h3 style="font-size:13px;color:#cdd8e8;margin-bottom:6px">BINARY-01: Server-Side Challenge</h3>
+      <p style="font-size:12px;color:#7a8fa0;line-height:1.5">
+        "A tool that reads all, bypassing the guards of permission. Use it wisely to uncover secrets. What was once forbidden is now open to your eyes."
+        <br><span style="color:#556677;font-size:11px">No download. The tool is already installed on the server.</span>
+      </p>
     </div>
   <?php else: ?>
     <div class="lock-box">

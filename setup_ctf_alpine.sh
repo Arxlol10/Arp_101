@@ -749,6 +749,9 @@ EOF_PYTHON
         "$CTF/T1-Crypto/crypto-04/create_crypto04.py"
         "$CTF/T1-Crypto/crypto-05/create_crypto05.py"
         "$CTF/T1-Crypto/crypto-hp01/create_crypto_hp01.py"
+        "$CTF/T1-Misc/misc-01/create_misc01.py"
+        "$CTF/T1-Misc/misc-02/create_misc02.py"
+        "$CTF/T1-Misc/misc-03/create_misc03.py"
         "$CTF/T1-Honeypots/create_honeypots.py"
         "$CTF/T2-Forensics/forensics-03/create_forensics03.py"
         "$CTF/T2-Forensics/forensics-04/create_forensics04.py"
@@ -809,6 +812,17 @@ A shifting grid, a hidden word. The key repeats as the message flows.
 EOF
     cp "$CTF/T1-Crypto/crypto-hp01/rsa_params.txt" /var/www/html/files/crypto/ 2>/dev/null || true
     cp "$CTF/T1-Crypto/crypto-hp01/ciphertext.txt" /var/www/html/files/crypto/ 2>/dev/null || true
+
+    # T1-Misc challenge files
+    cp "$CTF/T1-Misc/misc-01/crontab_export.txt"          /var/www/html/files/misc/ 2>/dev/null || warn "Missing: crontab_export.txt"
+    cat > /var/www/html/files/misc/misc01_README.txt << 'EOF'
+The clockwork of the machine ticks in secret. What runs in the shadows, and what does it carry?
+EOF
+    cp "$CTF/T1-Misc/misc-02/workstation_screenshot.jpg"  /var/www/html/files/misc/ 2>/dev/null || warn "Missing: workstation_screenshot.jpg"
+    cat > /var/www/html/files/misc/misc02_README.txt << 'EOF'
+A picture is worth a thousand words, but some words are invisible to the naked eye.
+EOF
+    cp "$CTF/T1-Misc/misc-03/access.log"                  /var/www/html/files/misc/ 2>/dev/null || warn "Missing: access.log"
 
     cp "$CTF/T1-Honeypots/backup.zip"      /var/www/html/files/misc/ 2>/dev/null || warn "Missing: backup.zip"
     cp "$CTF/T1-Honeypots/credentials.txt" /var/www/html/files/misc/ 2>/dev/null || warn "Missing: credentials.txt"

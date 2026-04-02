@@ -8,7 +8,7 @@ char *notes[10];
 void secret_admin_shell() {
     printf("[!] WARNING: Unauthorized admin function invoked!\n");
     setresuid(geteuid(), geteuid(), geteuid());
-    system("/bin/cat /home/engineer/.flag_binary03 2>/dev/null || echo 'FLAG{t3_tc4ch3_p01s0n_w1n_x1k}'");
+    system("/bin/cat /home/engineer/.flag_binary03 2>/dev/null || echo 'FLAG{t3_h34p_tc4ch3_p01s0n1ng_n9k4}'");
     exit(0);
 }
 

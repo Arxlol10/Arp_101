@@ -46,7 +46,7 @@ def create_pcap(filename):
 
     wrpcap(filename, packets)
     print(f"[+] PCAP file generated: {filename}")
-    print("    Flag: FLAG{t3_p0rt_kn0ck1ng_m4st3r_j8x}")
+    print("    Flag: FLAG{t3_p0rt_kn0ck1ng_s3qu3nc3_v2b}")
     print("    Sequence: 1337, 7331, 8080, 2222")
     
 if __name__ == "__main__":

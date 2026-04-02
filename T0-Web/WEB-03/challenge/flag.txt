@@ -1,1 +1,1 @@
-FLAG{web_03_ssrf_internal_d8v5}
+FLAG{web_03_jwt_secret_leak_q2w8}

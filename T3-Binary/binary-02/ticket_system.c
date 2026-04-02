@@ -23,7 +23,7 @@ void get_flag() {
         // We will execute a shell to make it easy, or just read the flag file.
         // It's SUID so we just drop into a shell.
         setresuid(geteuid(), geteuid(), geteuid());
-        system("/bin/cat /home/engineer/.flag_binary02 2>/dev/null || echo 'FLAG{t3_fmt_str1ng_0v3rwr1t3_m9z}'");
+        system("/bin/cat /home/engineer/.flag_binary02 2>/dev/null || echo 'FLAG{t3_fmt_str_0v3rwr1t3_y5v}'");
     } else {
         printf("[-] You do not have admin access to view the flag.\n");
     }

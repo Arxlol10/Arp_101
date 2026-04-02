@@ -1,1 +1,1 @@
-FLAG{web_02_lfi_chain_rce_m4p9}
+FLAG{web_02_imagetragick_rce_p9n7}

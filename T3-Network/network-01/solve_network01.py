@@ -28,7 +28,7 @@ def solve(target_ip):
     print("[+] Sequence complete.")
     print("[*] Now log into the engineer account and read ~/knock_flag.txt to get the flag:")
     print("    cat /home/engineer/knock_flag.txt")
-    print("\n[+] Expected Flag: FLAG{t3_p0rt_kn0ck1ng_m4st3r_j8x}")
+    print("\n[+] Expected Flag: FLAG{t3_p0rt_kn0ck1ng_s3qu3nc3_v2b}")
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:

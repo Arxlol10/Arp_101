@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>inbox · psst</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="wrap">
+    <div class="topbar">
+      <div class="brand dark">psst</div>
+      <button class="btn ghost small" id="logout">Log out</button>
+    </div>
+
+    <div class="seg">
+      <button data-tab="play" class="active">Play</button>
+      <button data-tab="inbox">Inbox <span class="badge hidden" id="unread"></span></button>
+      <button data-tab="settings">Settings</button>
+    </div>
+
+    <!-- PLAY: pick a prompt, copy the link, share a story -->
+    <section id="tab-play" class="stack">
+      <div class="qcard">
+        <div class="top" id="play-prompt">💬 send me anonymous messages!</div>
+        <div class="body" style="font-size:16px;font-weight:600">
+          <div style="color:var(--muted);margin-bottom:8px">Step 1: copy your link</div>
+          <div class="linkbox"><code id="mylink"></code><button class="btn small" id="copy">Copy</button></div>
+          <div style="color:var(--muted);margin:16px 0 8px">Step 2: share it to your story</div>
+          <button class="btn" id="share-link">Share story image</button>
+        </div>
+      </div>
+      <div class="section-title">Pick a game</div>
+      <div class="games" id="games"></div>
+      <div class="note dark" id="views"></div>
+    </section>
+
+    <!-- INBOX -->
+    <section id="tab-inbox" class="hidden">
+      <div class="grid" id="grid"></div>
+      <div class="empty hidden" id="empty">no messages yet 👀<br>share your link to get some!</div>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="tab-settings" class="hidden stack">
+      <label class="row">
+        <span>Display name<small>shown on your link page</small></span>
+        <input type="text" id="display-name" maxlength="40" style="max-width:160px;text-align:right;background:transparent">
+      </label>
+      <label class="row">
+        <span>Pause my link<small>stop receiving new messages</small></span>
+        <input type="checkbox" id="paused">
+      </label>
+      <label class="row">
+        <span>Hints (pro)<small>see sender device type, timezone, language and where they came from</small></span>
+        <input type="checkbox" id="pro">
+      </label>
+      <div class="note dark">Hints never include IP address or precise location.</div>
+    </section>
+  </main>
+
+  <!-- message sheet -->
+  <div class="modal hidden" id="modal">
+    <div class="sheet stack">
+      <div class="qcard">
+        <div class="top" id="m-prompt"></div>
+        <div class="body" id="m-question"></div>
+      </div>
+      <div class="hints hidden" id="m-hints"></div>
+      <textarea class="field" id="m-reply" rows="3" maxlength="500" placeholder="type your reply..."></textarea>
+      <button class="btn" id="m-make">Reply with a story</button>
+      <canvas id="m-canvas" class="story-preview hidden"></canvas>
+      <button class="btn hidden" id="m-share">Share / download image</button>
+      <div class="actions">
+        <button class="btn ghost small" id="m-report">Report</button>
+        <button class="btn ghost small" id="m-block">Block sender</button>
+        <button class="btn ghost small" id="m-delete">Delete</button>
+      </div>
+      <button class="btn light" id="m-close">Close</button>
+    </div>
+  </div>
+
+  <script src="/static/common.js"></script>
+  <script src="/static/story.js"></script>
+  <script>
+    const state = { me: null, games: [], game: '', messages: [], open: null };
+
+    const linkFor = (slug) => `${location.host}/${state.me.username}${slug ? '/' + slug : ''}`;
+
+    function showTab(name) {
+      document.querySelectorAll('.seg button').forEach((b) => b.classList.toggle('active', b.dataset.tab === name));
+      for (const t of ['play', 'inbox', 'settings']) $(`#tab-${t}`).classList.toggle('hidden', t !== name);
+    }
+    document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => showTab(b.dataset.tab)));
+
+    function renderUnread(n) {
+      $('#unread').textContent = n;
+      $('#unread').classList.toggle('hidden', !n);
+      document.title = n ? `(${n}) inbox · psst` : 'inbox · psst';
+    }
+
+    function renderPlay() {
+      const game = state.games.find((g) => g.slug === state.game);
+      $('#play-prompt').textContent = `${game.emoji} ${game.title}`;
+      $('#mylink').textContent = linkFor(state.game);
+      $('#games').replaceChildren(
+        ...state.games.map((g) =>
+          el('button', { class: g.slug === state.game ? 'active' : '', onclick: () => { state.game = g.slug; renderPlay(); } }, `${g.emoji} ${g.title}`),
+        ),
+      );
+      $('#views').textContent = `your link has been opened ${state.me.linkViews} time${state.me.linkViews === 1 ? '' : 's'}`;
+    }
+
+    function renderInbox() {
+      const grid = $('#grid');
+      grid.replaceChildren(
+        ...state.messages.map((m) =>
+          el(
+            'button',
+            { class: `tile${m.read ? '' : ' unread'}`, onclick: () => openMessage(m.id), 'aria-label': m.read ? 'message' : 'new message' },
+            m.read ? m.emoji : '💌',
+            el('span', { class: 'when' }, timeAgo(m.createdAt)),
+            m.reply ? el('span', { class: 'replied' }, '↩') : '',
+          ),
+        ),
+      );
+      $('#empty').classList.toggle('hidden', state.messages.length > 0);
+      renderUnread(state.messages.filter((m) => !m.read).length);
+    }
+
+    async function refreshInbox() {
+      const data = await api('/api/inbox');
+      state.messages = data.messages;
+      renderInbox();
+    }
+
+    function referrerHost(ref) {
+      if (!ref) return 'opened directly';
+      try {
+        return new URL(ref).host || ref;
+      } catch {
+        return ref;
+      }
+    }
+
+    async function openMessage(id) {
+      const m = state.messages.find((x) => x.id === id);
+      state.open = m;
+      $('#m-prompt').textContent = `${m.emoji} ${m.prompt}`;
+      $('#m-question').textContent = m.question;
+      $('#m-reply').value = m.reply || '';
+      $('#m-canvas').classList.add('hidden');
+      $('#m-share').classList.add('hidden');
+      const hints = $('#m-hints');
+      if (m.hints) {
+        hints.replaceChildren(
+          el('div', {}, el('b', {}, '🔎 hints')),
+          el('div', {}, `📱 ${m.hints.device || 'unknown device'}`),
+          el('div', {}, `🕒 ${m.hints.timezone || 'unknown timezone'}`),
+          el('div', {}, `🗣 ${m.hints.language || 'unknown language'}`),
+          el('div', {}, `🔗 ${referrerHost(m.hints.referrer)}`),
+          el('div', {}, `⏱ sent ${new Date(m.createdAt).toLocaleString()}`),
+        );
+        hints.classList.remove('hidden');
+      } else {
+        hints.classList.add('hidden');
+      }
+      $('#modal').classList.remove('hidden');
+      if (!m.read) {
+        const r = await api(`/api/inbox/${m.id}/read`, { method: 'POST' });
+        m.read = true;
+        renderInbox();
+        renderUnread(r.unread);
+      }
+    }
+
+    function closeModal() {
+      $('#modal').classList.add('hidden');
+      state.open = null;
+    }
+
+    $('#m-close').addEventListener('click', closeModal);
+    $('#modal').addEventListener('click', (e) => e.target.id === 'modal' && closeModal());
+
+    $('#m-make').addEventListener('click', async () => {
+      const m = state.open;
+      const text = $('#m-reply').value.trim();
+      if (!text) return toast('type a reply first');
+      const updated = await api(`/api/inbox/${m.id}/reply`, { method: 'POST', body: { text } });
+      Object.assign(m, updated);
+      renderInbox();
+      renderReplyStory($('#m-canvas'), { prompt: `${m.emoji} ${m.prompt}`, question: m.question, reply: text, link: linkFor(m.gameSlug) });
+      $('#m-canvas').classList.remove('hidden');
+      $('#m-share').classList.remove('hidden');
+    });
+
+    $('#m-share').addEventListener('click', async () => {
+      const r = await shareOrDownload($('#m-canvas'), `psst-reply-${state.open.id.slice(0, 8)}.png`);
+      if (r === 'downloaded') toast('image saved — post it to your story');
+    });
+
+    async function messageAction(path, method, confirmText, doneText) {
+      if (confirmText && !confirm(confirmText)) return;
+      await api(path, { method });
+      toast(doneText);
+      closeModal();
+      await refreshInbox();
+    }
+    $('#m-report').addEventListener('click', () => messageAction(`/api/inbox/${state.open.id}/report`, 'POST', null, 'reported. thanks for keeping psst safe'));
+    $('#m-block').addEventListener('click', () =>
+      messageAction(`/api/inbox/${state.open.id}/block`, 'POST', 'Block this sender? Their messages will be removed and new ones hidden.', 'sender blocked'),
+    );
+    $('#m-delete').addEventListener('click', () => messageAction(`/api/inbox/${state.open.id}`, 'DELETE', 'Delete this message?', 'deleted'));
+
+    $('#copy').addEventListener('click', async () => {
+      const text = `${location.protocol}//${linkFor(state.game)}`;
+      try {
+        await navigator.clipboard.writeText(text);
+        toast('link copied!');
+      } catch {
+        prompt('copy your link', text);
+      }
+    });
+
+    $('#share-link').addEventListener('click', async () => {
+      const game = state.games.find((g) => g.slug === state.game);
+      const canvas = document.createElement('canvas');
+      renderLinkStory(canvas, { prompt: `${game.emoji} ${game.title}`, link: linkFor(state.game) });
+      try {
+        await navigator.clipboard.writeText(`${location.protocol}//${linkFor(state.game)}`);
+      } catch {}
+      const r = await shareOrDownload(canvas, 'psst-story.png');
+      if (r === 'downloaded') toast('image saved & link copied — add a link sticker in your story');
+    });
+
+    async function saveSettings(patch) {
+      state.me = await api('/api/me', { method: 'PATCH', body: patch });
+      toast('saved');
+      if ('pro' in patch) await refreshInbox();
+    }
+    $('#display-name').addEventListener('change', (e) => saveSettings({ displayName: e.target.value }));
+    $('#paused').addEventListener('change', (e) => saveSettings({ paused: e.target.checked }));
+    $('#pro').addEventListener('change', (e) => saveSettings({ pro: e.target.checked }));
+
+    $('#logout').addEventListener('click', async () => {
+      await api('/api/auth/logout', { method: 'POST' });
+      location.replace('/');
+    });
+
+    function listen() {
+      const es = new EventSource('/api/inbox/stream');
+      es.addEventListener('message', (e) => {
+        const m = JSON.parse(e.data);
+        if (state.messages.some((x) => x.id === m.id)) return;
+        state.messages.unshift(m);
+        renderInbox();
+        toast('💌 new message!');
+      });
+    }
+
+    (async () => {
+      try {
+        state.me = await api('/api/me');
+      } catch {
+        return location.replace('/');
+      }
+      state.games = await api('/api/games');
+      $('#display-name').value = state.me.displayName;
+      $('#paused').checked = state.me.paused;
+      $('#pro').checked = state.me.pro;
+      renderPlay();
+      await refreshInbox();
+      if (state.me.unread) showTab('inbox');
+      listen();
+    })();
+  </script>
+</body>
+</html>

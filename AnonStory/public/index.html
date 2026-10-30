@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>psst · anonymous q&amp;a</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="gradient">
+  <main class="wrap stack">
+    <div class="brand" style="font-size:44px;margin-top:40px">psst</div>
+    <div class="note" style="font-size:17px;font-weight:700">anonymous q&amp;a for your stories.<br>share your link, get honest messages, reply with a story card.</div>
+
+    <div class="tabs" role="tablist">
+      <button class="active" data-mode="signup" type="button">Create account</button>
+      <button data-mode="login" type="button">Log in</button>
+    </div>
+
+    <form id="auth" class="stack">
+      <input class="field" type="text" name="username" placeholder="username" autocomplete="username" autocapitalize="off" spellcheck="false" required>
+      <input class="field" type="password" name="password" placeholder="password (8+ characters)" autocomplete="new-password" required>
+      <div class="error" id="error"></div>
+      <button class="btn" type="submit" id="submit">Get started</button>
+    </form>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    let mode = 'signup';
+    const form = $('#auth');
+
+    api('/api/me').then(() => location.replace('/inbox')).catch(() => {});
+
+    document.querySelectorAll('.tabs button').forEach((b) =>
+      b.addEventListener('click', () => {
+        mode = b.dataset.mode;
+        document.querySelectorAll('.tabs button').forEach((x) => x.classList.toggle('active', x === b));
+        $('#submit').textContent = mode === 'signup' ? 'Get started' : 'Log in';
+        form.password.autocomplete = mode === 'signup' ? 'new-password' : 'current-password';
+        $('#error').textContent = '';
+      }),
+    );
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      $('#error').textContent = '';
+      $('#submit').disabled = true;
+      try {
+        await api(`/api/auth/${mode}`, {
+          method: 'POST',
+          body: { username: form.username.value.trim(), password: form.password.value },
+        });
+        location.replace('/inbox');
+      } catch (err) {
+        $('#error').textContent = err.message;
+      } finally {
+        $('#submit').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

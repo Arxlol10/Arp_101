@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>send an anonymous message · psst</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="gradient">
+  <main class="wrap">
+    <div class="brand">psst</div>
+
+    <section id="compose" class="stack">
+      <div class="card">
+        <div class="card-head">
+          <div class="avatar" id="avatar">?</div>
+          <div>
+            <div class="who" id="who">@…</div>
+            <div class="prompt" id="prompt">send me anonymous messages!</div>
+          </div>
+        </div>
+        <div class="compose">
+          <textarea id="question" maxlength="300" placeholder="send me anonymous messages..." autofocus></textarea>
+          <span class="count" id="count">0/300</span>
+          <button class="dice" id="dice" type="button" title="random question" aria-label="random question">🎲</button>
+        </div>
+      </div>
+      <div class="note">🔒 anonymous q&amp;a. the recipient won't see who you are, but may see coarse hints (device type and timezone).</div>
+      <div class="error" id="error"></div>
+      <button class="btn" id="send" disabled>Send!</button>
+      <a class="btn light" href="/">Get your own messages!</a>
+    </section>
+
+    <section id="sent" class="stack hidden">
+      <div class="sent-check">✅</div>
+      <div class="brand">Sent!</div>
+      <button class="btn light" id="again">Send another message</button>
+      <a class="btn" href="/">Get your own messages!</a>
+    </section>
+
+    <section id="missing" class="stack hidden">
+      <div class="brand">🤔</div>
+      <div class="note" id="missing-text">this link doesn't exist.</div>
+      <a class="btn light" href="/">Make your own link</a>
+    </section>
+  </main>
+
+  <script src="/static/common.js"></script>
+  <script>
+    const [username, gameSlug = ''] = location.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+    const q = $('#question');
+    const sendBtn = $('#send');
+
+    function update() {
+      $('#count').textContent = `${q.value.length}/300`;
+      sendBtn.disabled = !q.value.trim();
+    }
+
+    async function load() {
+      try {
+        const [user, games] = await Promise.all([
+          api(`/api/users/${encodeURIComponent(username)}?view=1`),
+          api('/api/games'),
+        ]);
+        const game = games.find((g) => g.slug === gameSlug);
+        if (!game) throw Object.assign(new Error(), { status: 404 });
+        $('#who').textContent = `@${user.username}`;
+        $('#avatar').textContent = user.displayName.slice(0, 1).toUpperCase();
+        $('#prompt').textContent = `${game.emoji} ${game.title}`;
+        q.placeholder = game.slug ? `${game.title}...` : 'send me anonymous messages...';
+        document.title = `${game.title} · @${user.username}`;
+        if (user.paused) {
+          $('#compose').classList.add('hidden');
+          $('#missing').classList.remove('hidden');
+          $('#missing-text').textContent = `@${user.username} isn't accepting messages right now.`;
+        }
+      } catch {
+        $('#compose').classList.add('hidden');
+        $('#missing').classList.remove('hidden');
+      }
+    }
+
+    $('#dice').addEventListener('click', async () => {
+      const { text } = await api(`/api/suggestion?game=${encodeURIComponent(gameSlug)}`);
+      q.value = text;
+      update();
+    });
+
+    q.addEventListener('input', update);
+
+    sendBtn.addEventListener('click', async () => {
+      $('#error').textContent = '';
+      sendBtn.disabled = true;
+      try {
+        await api('/api/submit', {
+          method: 'POST',
+          body: {
+            username,
+            question: q.value.trim(),
+            deviceId: deviceId(),
+            gameSlug,
+            referrer: document.referrer,
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          },
+        });
+        $('#compose').classList.add('hidden');
+        $('#sent').classList.remove('hidden');
+        q.value = '';
+      } catch (err) {
+        $('#error').textContent = err.message;
+      } finally {
+        update();
+      }
+    });
+
+    $('#again').addEventListener('click', () => {
+      $('#sent').classList.add('hidden');
+      $('#compose').classList.remove('hidden');
+      q.focus();
+    });
+
+    load();
+  </script>
+</body>
+</html>

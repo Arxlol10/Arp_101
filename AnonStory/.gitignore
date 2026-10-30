@@ -1,0 +1,6 @@
+data/
+node_modules/
+tools/re/.bin/
+re-out/
+*.apk
+*.xapk

@@ -141,6 +141,12 @@ function renderLinkStory(canvas, { prompt, link }) {
 }
 
 async function shareOrDownload(canvas, filename) {
+  // In the Android WebView shell, blob downloads don't trigger a save, so hand
+  // the image to the native bridge instead.
+  if (window.AndroidBridge && typeof window.AndroidBridge.saveImage === 'function') {
+    window.AndroidBridge.saveImage(canvas.toDataURL('image/png'), filename);
+    return 'downloaded';
+  }
   const blob = await new Promise((r) => canvas.toBlob(r, 'image/png'));
   const file = new File([blob], filename, { type: 'image/png' });
   if (navigator.canShare && navigator.canShare({ files: [file] })) {

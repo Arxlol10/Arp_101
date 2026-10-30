@@ -2,12 +2,12 @@ const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { openDb } = require('./db');
+const { openStore } = require('./storage');
 const { getGame, publicGames, randomSuggestion } = require('./games');
 const moderation = require('./moderation');
 const { RateLimiter } = require('./ratelimit');
 
-const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+const PUBLIC_DIR = process.env.PUBLIC_DIR || path.join(__dirname, '..', 'public');
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 const MAX_MESSAGE_LEN = 300;
 const MAX_BODY_BYTES = 16 * 1024;
@@ -59,15 +59,26 @@ function parseCookies(header = '') {
   return out;
 }
 
-// Coarse device family from the User-Agent; this is all the "hint" keeps.
+// Device fingerprint from the User-Agent: family, OS version and browser.
 function deviceFamily(ua = '') {
-  if (/iPhone/i.test(ua)) return 'iPhone';
-  if (/iPad/i.test(ua)) return 'iPad';
-  if (/Android/i.test(ua)) return 'Android';
-  if (/Windows/i.test(ua)) return 'Windows PC';
-  if (/Macintosh|Mac OS X/i.test(ua)) return 'Mac';
-  if (/Linux/i.test(ua)) return 'Linux';
-  return 'Unknown device';
+  let device = 'Unknown device';
+  if (/iPhone/i.test(ua)) device = 'iPhone';
+  else if (/iPad/i.test(ua)) device = 'iPad';
+  else if (/Android/i.test(ua)) device = 'Android';
+  else if (/Windows/i.test(ua)) device = 'Windows PC';
+  else if (/Macintosh|Mac OS X/i.test(ua)) device = 'Mac';
+  else if (/Linux/i.test(ua)) device = 'Linux';
+
+  const os =
+    (ua.match(/iPhone OS (\d+[_.]\d+)/i) || ua.match(/CPU OS (\d+[_.]\d+)/i) || [])[1]?.replace('_', '.') ||
+    (ua.match(/Android (\d+(?:\.\d+)?)/i) || [])[1] ||
+    (ua.match(/Windows NT (\d+\.\d+)/i) || [])[1] ||
+    (ua.match(/Mac OS X (\d+[_.]\d+)/i) || [])[1]?.replace('_', '.') ||
+    '';
+  const browser =
+    (ua.match(/(Edg|OPR|Chrome|Firefox|Version)\/(\d+)/) || []).slice(1).join(' ').replace('Version', 'Safari').replace('Edg', 'Edge').replace('OPR', 'Opera') ||
+    '';
+  return [device, os && `v${os}`, browser].filter(Boolean).join(' · ');
 }
 
 function clean(value, max) {
@@ -131,84 +142,91 @@ function messageView(row, includeHints) {
     repliedAt: row.replied_at,
   };
   if (includeHints) {
-    view.hints = { device: row.hint_device, timezone: row.hint_tz, language: row.hint_lang, referrer: row.referrer };
+    const location = [row.geo_city, row.geo_region, row.geo_country].filter(Boolean).join(', ');
+    view.hints = {
+      device: row.hint_device,
+      timezone: row.hint_tz,
+      language: row.hint_lang,
+      referrer: row.referrer,
+      ip: row.hint_ip,
+      location: location || null,
+      network: row.hint_net,
+    };
   }
   return view;
 }
 
 // ---------- app ----------
 
-function createApp({ dbFile = ':memory:', secret = process.env.PSST_SECRET || crypto.randomBytes(32).toString('hex'), limits = {} } = {}) {
-  const db = openDb(dbFile);
+async function createApp({ storeUrl, secret = process.env.PSST_SECRET || crypto.randomBytes(32).toString('hex'), limits = {} } = {}) {
+  const store = await openStore(storeUrl);
   const sendLimiter = new RateLimiter({ limit: limits.perSender ?? 5, windowMs: 60_000 });
   const ipLimiter = new RateLimiter({ limit: limits.perIp ?? 30, windowMs: 60_000 });
   const authLimiter = new RateLimiter({ limit: limits.auth ?? 10, windowMs: 60_000 });
-  const streams = new Map(); // userId -> Set<res>
 
-  const q = {
-    userByName: db.prepare('SELECT * FROM users WHERE username = ?'),
-    userById: db.prepare('SELECT * FROM users WHERE id = ?'),
-    insertUser: db.prepare('INSERT INTO users (username, password_hash, display_name, created_at) VALUES (?, ?, ?, ?)'),
-    updateUser: db.prepare('UPDATE users SET display_name = ?, paused = ?, pro = ? WHERE id = ?'),
-    bumpViews: db.prepare('UPDATE users SET link_views = link_views + 1 WHERE id = ?'),
-    insertSession: db.prepare('INSERT INTO sessions (token_hash, user_id, expires_at) VALUES (?, ?, ?)'),
-    sessionUser: db.prepare('SELECT u.* FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ? AND s.expires_at > ?'),
-    deleteSession: db.prepare('DELETE FROM sessions WHERE token_hash = ?'),
-    insertMessage: db.prepare(`INSERT INTO messages (id, user_id, game_slug, body, sender_hash, hint_device, hint_tz, hint_lang, referrer, created_at)
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`),
-    inbox: db.prepare('SELECT * FROM messages WHERE user_id = ? ORDER BY created_at DESC LIMIT 200'),
-    message: db.prepare('SELECT * FROM messages WHERE id = ? AND user_id = ?'),
-    unreadCount: db.prepare('SELECT COUNT(*) AS n FROM messages WHERE user_id = ? AND read_at IS NULL'),
-    markRead: db.prepare('UPDATE messages SET read_at = COALESCE(read_at, ?) WHERE id = ? AND user_id = ?'),
-    reply: db.prepare('UPDATE messages SET reply = ?, replied_at = ?, read_at = COALESCE(read_at, ?) WHERE id = ? AND user_id = ?'),
-    deleteMessage: db.prepare('DELETE FROM messages WHERE id = ? AND user_id = ?'),
-    report: db.prepare('UPDATE messages SET reported = 1 WHERE id = ? AND user_id = ?'),
-    block: db.prepare('INSERT OR IGNORE INTO blocks (user_id, sender_hash, created_at) VALUES (?, ?, ?)'),
-    isBlocked: db.prepare('SELECT 1 FROM blocks WHERE user_id = ? AND sender_hash = ?'),
-    purgeFromSender: db.prepare('DELETE FROM messages WHERE user_id = ? AND sender_hash = ?'),
-  };
-
+  // When TRUST_PROXY is set (e.g. behind Vercel/one reverse proxy), take the
+  // first hop of X-Forwarded-For; otherwise trust only the socket address so a
+  // client can't spoof the header.
   function clientIp(req) {
-    return req.socket.remoteAddress || 'unknown';
+    if (process.env.TRUST_PROXY) {
+      const fwd = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+      if (fwd) return fwd;
+    }
+    return (req.socket.remoteAddress || 'unknown').replace(/^::ffff:/, '');
   }
 
-  function currentUser(req) {
+  // Coarse geo/network, read from the edge platform's headers when present.
+  // Vercel sets x-vercel-ip-city / -country-region / -country; a geo DB or
+  // service can fill these in other hosting. No lookup happens here.
+  function geoFromReq(req) {
+    const h = req.headers;
+    const dec = (v) => {
+      try {
+        return decodeURIComponent(v);
+      } catch {
+        return v;
+      }
+    };
+    return {
+      city: h['x-vercel-ip-city'] ? clean(dec(h['x-vercel-ip-city']), 80) : null,
+      region: h['x-vercel-ip-country-region'] ? clean(dec(h['x-vercel-ip-country-region']), 80) : null,
+      country: h['x-vercel-ip-country'] ? clean(dec(h['x-vercel-ip-country']), 8) : null,
+      // ASN/ISP if a header like x-vercel-ip-as-number or a CDN equivalent is present.
+      net: clean(h['x-vercel-ip-as-number'] || h['x-asn'] || '', 120) || null,
+    };
+  }
+
+  async function currentUser(req) {
     const token = parseCookies(req.headers.cookie).psst_session;
     if (!token) return null;
-    return q.sessionUser.get(sha256(token), Date.now()) || null;
+    return (await store.sessionUser(sha256(token), Date.now())) || null;
   }
 
-  function requireUser(req) {
-    const user = currentUser(req);
+  async function requireUser(req) {
+    const user = await currentUser(req);
     if (!user) throw new HttpError(401, 'not signed in');
     return user;
   }
 
-  function startSession(res, userId) {
+  async function startSession(res, userId) {
     const token = crypto.randomBytes(32).toString('base64url');
-    q.insertSession.run(sha256(token), userId, Date.now() + SESSION_TTL_MS);
+    await store.insertSession(sha256(token), userId, Date.now() + SESSION_TTL_MS);
+    const secureCookie = process.env.TRUST_PROXY ? ' Secure;' : '';
     res.setHeader(
       'Set-Cookie',
-      `psst_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${SESSION_TTL_MS / 1000}`,
+      `psst_session=${token}; HttpOnly;${secureCookie} SameSite=Lax; Path=/; Max-Age=${SESSION_TTL_MS / 1000}`,
     );
   }
 
-  function meView(user) {
+  async function meView(user) {
     return {
       username: user.username,
       displayName: user.display_name,
       paused: Boolean(user.paused),
       pro: Boolean(user.pro),
       linkViews: user.link_views,
-      unread: q.unreadCount.get(user.id).n,
+      unread: await store.unreadCount(user.id),
     };
-  }
-
-  function pushToUser(userId, event, data) {
-    const set = streams.get(userId);
-    if (!set) return;
-    const frame = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
-    for (const res of set) res.write(frame);
   }
 
   // Same-origin check for cookie-authenticated, state-changing requests.
@@ -240,42 +258,42 @@ function createApp({ dbFile = ':memory:', secret = process.env.PSST_SECRET || cr
       throw new HttpError(400, 'username must be 3-24 chars: letters, numbers, . or _');
     }
     if (password.length < 8) throw new HttpError(400, 'password must be at least 8 characters');
-    if (q.userByName.get(username)) throw new HttpError(409, 'username taken');
-    const { lastInsertRowid } = q.insertUser.run(username, hashPassword(password), clean(body.displayName, 40) || username, Date.now());
-    startSession(res, Number(lastInsertRowid));
-    send(res, 201, meView(q.userById.get(lastInsertRowid)));
+    if (await store.userByName(username)) throw new HttpError(409, 'username taken');
+    const { lastInsertRowid } = await store.insertUser(username, hashPassword(password), clean(body.displayName, 40) || username, Date.now());
+    await startSession(res, lastInsertRowid);
+    send(res, 201, await meView(await store.userById(lastInsertRowid)));
   });
 
   route('POST', '/api/auth/login', async (req, res) => {
     if (!authLimiter.take(clientIp(req))) throw new HttpError(429, 'slow down');
     const body = await readBody(req);
-    const user = q.userByName.get(clean(body.username, 32));
+    const user = await store.userByName(clean(body.username, 32));
     if (!user || !verifyPassword(String(body.password || ''), user.password_hash)) {
       throw new HttpError(401, 'wrong username or password');
     }
-    startSession(res, user.id);
-    send(res, 200, meView(user));
+    await startSession(res, user.id);
+    send(res, 200, await meView(user));
   });
 
   route('POST', '/api/auth/logout', async (req, res) => {
     const token = parseCookies(req.headers.cookie).psst_session;
-    if (token) q.deleteSession.run(sha256(token));
+    if (token) await store.deleteSession(sha256(token));
     send(res, 200, { ok: true }, { 'Set-Cookie': 'psst_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0' });
   });
 
   route('GET', '/api/me', async (req, res) => {
-    send(res, 200, meView(requireUser(req)));
+    send(res, 200, await meView(await requireUser(req)));
   });
 
   route('PATCH', '/api/me', async (req, res) => {
-    const user = requireUser(req);
+    const user = await requireUser(req);
     const body = await readBody(req);
     const displayName = body.displayName !== undefined ? clean(body.displayName, 40) || user.username : user.display_name;
     const paused = body.paused !== undefined ? (body.paused ? 1 : 0) : user.paused;
     // "pro" unlocks hints. There is no payment flow in the clone; it's a toggle.
     const pro = body.pro !== undefined ? (body.pro ? 1 : 0) : user.pro;
-    q.updateUser.run(displayName, paused, pro, user.id);
-    send(res, 200, meView(q.userById.get(user.id)));
+    await store.updateUser(displayName, paused, pro, user.id);
+    send(res, 200, await meView(await store.userById(user.id)));
   });
 
   route('GET', '/api/games', async (req, res) => {
@@ -287,9 +305,9 @@ function createApp({ dbFile = ':memory:', secret = process.env.PSST_SECRET || cr
   });
 
   route('GET', '/api/users/:username', async (req, res, { username }) => {
-    const user = q.userByName.get(username);
+    const user = await store.userByName(username);
     if (!user) throw new HttpError(404, 'no such user');
-    if (new URL(req.url, 'http://x').searchParams.get('view') === '1') q.bumpViews.run(user.id);
+    if (new URL(req.url, 'http://x').searchParams.get('view') === '1') await store.bumpViews(user.id);
     send(res, 200, { username: user.username, displayName: user.display_name, paused: Boolean(user.paused) });
   });
 
@@ -307,7 +325,7 @@ function createApp({ dbFile = ':memory:', secret = process.env.PSST_SECRET || cr
     if (!/^[\w-]{8,64}$/.test(deviceId)) throw new HttpError(400, 'missing deviceId');
     if (!getGame(gameSlug)) throw new HttpError(400, 'unknown game');
 
-    const user = q.userByName.get(username);
+    const user = await store.userByName(username);
     if (!user) throw new HttpError(404, 'no such user');
     if (user.paused) throw new HttpError(403, 'this user is not accepting messages right now');
 
@@ -320,87 +338,78 @@ function createApp({ dbFile = ':memory:', secret = process.env.PSST_SECRET || cr
     if (reason) throw new HttpError(422, 'this message was blocked by our safety filter');
 
     const id = crypto.randomUUID();
+    const ip = clientIp(req);
+    const geo = geoFromReq(req);
     // Blocked senders get the same success response so they can't tell they are blocked.
-    if (!q.isBlocked.get(user.id, senderHash)) {
-      q.insertMessage.run(
+    if (!(await store.isBlocked(user.id, senderHash))) {
+      await store.insertMessage({
         id,
-        user.id,
+        userId: user.id,
         gameSlug,
-        question,
+        body: question,
         senderHash,
-        deviceFamily(req.headers['user-agent']),
-        clean(body.timezone, 64) || null,
-        clean((req.headers['accept-language'] || '').split(',')[0], 16) || null,
-        clean(body.referrer, 200) || null,
-        Date.now(),
-      );
-      const row = q.message.get(id, user.id);
-      pushToUser(user.id, 'message', messageView(row, Boolean(user.pro)));
+        device: deviceFamily(req.headers['user-agent']),
+        tz: clean(body.timezone, 64) || null,
+        lang: clean((req.headers['accept-language'] || '').split(',')[0], 16) || null,
+        referrer: clean(body.referrer, 200) || null,
+        ip: clean(ip, 64) || null,
+        city: geo.city,
+        region: geo.region,
+        country: geo.country,
+        net: geo.net,
+        createdAt: Date.now(),
+      });
     }
     send(res, 200, { questionId: id });
   });
 
   route('GET', '/api/inbox', async (req, res) => {
-    const user = requireUser(req);
-    send(res, 200, { unread: q.unreadCount.get(user.id).n, messages: q.inbox.all(user.id).map((r) => messageView(r, Boolean(user.pro))) });
-  });
-
-  route('GET', '/api/inbox/stream', async (req, res) => {
-    const user = requireUser(req);
-    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
-    res.write(': connected\n\n');
-    if (!streams.has(user.id)) streams.set(user.id, new Set());
-    streams.get(user.id).add(res);
-    const ping = setInterval(() => res.write(': ping\n\n'), 25_000);
-    req.on('close', () => {
-      clearInterval(ping);
-      const set = streams.get(user.id);
-      set?.delete(res);
-      if (set && !set.size) streams.delete(user.id);
-    });
+    const user = await requireUser(req);
+    const [unread, rows] = await Promise.all([store.unreadCount(user.id), store.inbox(user.id)]);
+    send(res, 200, { unread, messages: rows.map((r) => messageView(r, Boolean(user.pro))) });
   });
 
   route('GET', '/api/inbox/:id', async (req, res, { id }) => {
-    const user = requireUser(req);
-    const row = q.message.get(id, user.id);
+    const user = await requireUser(req);
+    const row = await store.message(id, user.id);
     if (!row) throw new HttpError(404, 'message not found');
     send(res, 200, messageView(row, Boolean(user.pro)));
   });
 
   route('POST', '/api/inbox/:id/read', async (req, res, { id }) => {
-    const user = requireUser(req);
-    if (!q.markRead.run(Date.now(), id, user.id).changes) throw new HttpError(404, 'message not found');
-    send(res, 200, { ok: true, unread: q.unreadCount.get(user.id).n });
+    const user = await requireUser(req);
+    if (!(await store.markRead(Date.now(), id, user.id)).changes) throw new HttpError(404, 'message not found');
+    send(res, 200, { ok: true, unread: await store.unreadCount(user.id) });
   });
 
   route('POST', '/api/inbox/:id/reply', async (req, res, { id }) => {
-    const user = requireUser(req);
+    const user = await requireUser(req);
     const body = await readBody(req);
     const text = clean(body.text, 500);
     if (!text) throw new HttpError(400, 'reply is empty');
     const now = Date.now();
-    if (!q.reply.run(text, now, now, id, user.id).changes) throw new HttpError(404, 'message not found');
-    send(res, 200, messageView(q.message.get(id, user.id), Boolean(user.pro)));
+    if (!(await store.reply(text, now, id, user.id)).changes) throw new HttpError(404, 'message not found');
+    send(res, 200, messageView(await store.message(id, user.id), Boolean(user.pro)));
   });
 
   route('POST', '/api/inbox/:id/report', async (req, res, { id }) => {
-    const user = requireUser(req);
-    if (!q.report.run(id, user.id).changes) throw new HttpError(404, 'message not found');
+    const user = await requireUser(req);
+    if (!(await store.report(id, user.id)).changes) throw new HttpError(404, 'message not found');
     send(res, 200, { ok: true });
   });
 
   route('POST', '/api/inbox/:id/block', async (req, res, { id }) => {
-    const user = requireUser(req);
-    const row = q.message.get(id, user.id);
+    const user = await requireUser(req);
+    const row = await store.message(id, user.id);
     if (!row) throw new HttpError(404, 'message not found');
-    q.block.run(user.id, row.sender_hash, Date.now());
-    const { changes } = q.purgeFromSender.run(user.id, row.sender_hash);
+    await store.block(user.id, row.sender_hash, Date.now());
+    const { changes } = await store.purgeFromSender(user.id, row.sender_hash);
     send(res, 200, { ok: true, removed: Number(changes) });
   });
 
   route('DELETE', '/api/inbox/:id', async (req, res, { id }) => {
-    const user = requireUser(req);
-    if (!q.deleteMessage.run(id, user.id).changes) throw new HttpError(404, 'message not found');
+    const user = await requireUser(req);
+    if (!(await store.deleteMessage(id, user.id)).changes) throw new HttpError(404, 'message not found');
     send(res, 200, { ok: true });
   });
 
@@ -457,8 +466,15 @@ function createApp({ dbFile = ':memory:', secret = process.env.PSST_SECRET || cr
   }
 
   const server = http.createServer(handle);
-  server.on('close', () => db.close());
-  return { server, db };
+  server.on('close', () => store.close());
+  return { server, store, handle };
 }
 
-module.exports = { createApp, moderation, deviceFamily };
+// Lazily build one app and reuse it across serverless invocations.
+let appPromise = null;
+function getApp() {
+  if (!appPromise) appPromise = createApp();
+  return appPromise;
+}
+
+module.exports = { createApp, getApp, moderation, deviceFamily };

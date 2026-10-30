@@ -4,3 +4,13 @@ tools/re/.bin/
 re-out/
 *.apk
 *.xapk
+
+# Android build outputs
+mobile/.gradle/
+mobile/build/
+mobile/app/build/
+mobile/local.properties
+dist/
+
+# Vercel
+.vercel/

@@ -1,16 +1,19 @@
 {
   "name": "psst-anon-story",
   "version": "1.0.0",
-  "description": "Clean-room clone of an anonymous Q&A 'story link' app (NGL-style): share a link, receive anonymous messages, reply with a story card.",
+  "description": "Anonymous-style Q&A 'story link' app: share a link, receive messages with sender hints, reply with a story card. Runs locally or on Vercel.",
   "main": "server/server.js",
   "type": "commonjs",
   "engines": {
-    "node": ">=22.13"
+    "node": ">=20"
   },
   "scripts": {
-    "start": "node --disable-warning=ExperimentalWarning server/server.js",
-    "dev": "node --disable-warning=ExperimentalWarning --watch server/server.js",
-    "test": "node --disable-warning=ExperimentalWarning --test test/*.test.js"
+    "start": "node server/server.js",
+    "dev": "node --watch server/server.js",
+    "test": "node --test test/*.test.js"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "@libsql/client": "^0.14.0"
+  }
 }

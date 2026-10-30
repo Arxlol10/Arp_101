@@ -1,0 +1,38 @@
+plugins {
+    id 'com.android.application'
+}
+
+android {
+    namespace 'app.psst.wrapper'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'app.psst.wrapper'
+        minSdk 29
+        targetSdk 34
+        versionCode 1
+        versionName '1.0'
+
+        // The deployed web app this shell opens. Override at build time with:
+        //   ./gradlew assembleDebug -PappUrl=https://your-app.vercel.app
+        def appUrl = project.findProperty('appUrl') ?: 'https://example.vercel.app'
+        resValue 'string', 'app_url', appUrl
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+}

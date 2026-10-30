@@ -155,6 +155,9 @@
       if (m.hints) {
         hints.replaceChildren(
           el('div', {}, el('b', {}, '🔎 hints')),
+          el('div', {}, `📍 ${m.hints.location || 'unknown location'}`),
+          el('div', {}, `🌐 ${m.hints.ip || 'unknown ip'}`),
+          el('div', {}, `📶 ${m.hints.network || 'unknown network'}`),
           el('div', {}, `📱 ${m.hints.device || 'unknown device'}`),
           el('div', {}, `🕒 ${m.hints.timezone || 'unknown timezone'}`),
           el('div', {}, `🗣 ${m.hints.language || 'unknown language'}`),
@@ -247,15 +250,24 @@
       location.replace('/');
     });
 
+    // Serverless-friendly: poll the inbox instead of holding an SSE connection.
     function listen() {
-      const es = new EventSource('/api/inbox/stream');
-      es.addEventListener('message', (e) => {
-        const m = JSON.parse(e.data);
-        if (state.messages.some((x) => x.id === m.id)) return;
-        state.messages.unshift(m);
-        renderInbox();
-        toast('💌 new message!');
-      });
+      let busy = false;
+      setInterval(async () => {
+        if (busy || document.hidden || state.open) return;
+        busy = true;
+        try {
+          const before = new Set(state.messages.map((m) => m.id));
+          const data = await api('/api/inbox');
+          const fresh = data.messages.some((m) => !before.has(m.id));
+          state.messages = data.messages;
+          renderInbox();
+          if (fresh) toast('💌 new message!');
+        } catch {
+        } finally {
+          busy = false;
+        }
+      }, 8000);
     }
 
     (async () => {
